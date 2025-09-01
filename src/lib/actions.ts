@@ -1,14 +1,38 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { products } from './data';
 import type { Product, ProductFormValues } from './types';
 import { v4 as uuidv4 } from 'uuid';
-import { z } from 'zod';
 import { productSchema } from './types';
+import { db } from './firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc,
+  query,
+  where,
+  limit as firestoreLimit,
+  startAt,
+  getCountFromServer,
+  orderBy,
+  startAfter
+} from 'firebase/firestore';
 
-// Simulate network latency
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// In a real app, this would save the image to a cloud storage bucket
+// and return the public URL. For this demo, we'll just return the data URI.
+export async function saveImage(dataUri: string): Promise<string> {
+  // Simulate upload time
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  // Here you would typically upload the file to a service like Cloud Storage for Firebase
+  // and get a public URL. For this demo, we'll just return the data URI itself
+  // as our "saved" URL. This is not efficient for a real app but works for prototyping.
+  console.log(`"Saving" image of length ${dataUri.length}`);
+  return dataUri;
+}
 
 export async function getProducts(filters: {
   query?: string;
@@ -16,55 +40,64 @@ export async function getProducts(filters: {
   page?: number;
   limit?: number;
 }): Promise<{ products: Product[]; totalCount: number }> {
-  await delay(1000); // Simulate DB query time
+    const productsRef = collection(db, "products");
+    let q = query(productsRef, orderBy("name"));
+    
+    let constraints = [];
+    if (filters.category && filters.category !== 'all') {
+        constraints.push(where("category", "==", filters.category));
+    }
+    
+    if (filters.query) {
+        // Firestore doesn't support partial string matching natively.
+        // For a real app, use a search service like Algolia or Elasticsearch.
+        // For this demo, we'll filter after fetching, which is inefficient.
+    }
 
-  let filteredProducts = products;
+    const countQuery = query(productsRef, ...constraints);
+    const snapshot = await getCountFromServer(countQuery);
+    const totalCount = snapshot.data().count;
+    
+    const page = filters.page || 1;
+    const limit = filters.limit || 8;
+    
+    if (page > 1) {
+        const first = query(productsRef, ...constraints, orderBy("name"), firestoreLimit((page - 1) * limit));
+        const documentSnapshots = await getDocs(first);
+        const lastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
+        q = query(productsRef, ...constraints, orderBy("name"), startAfter(lastVisible), firestoreLimit(limit));
+    } else {
+        q = query(productsRef, ...constraints, orderBy("name"), firestoreLimit(limit));
+    }
+    
+    const documentSnapshots = await getDocs(q);
 
-  if (filters.query) {
-    const lowerCaseQuery = filters.query.toLowerCase();
-    filteredProducts = filteredProducts.filter(p => p.name.toLowerCase().includes(lowerCaseQuery));
-  }
+    let productsData = documentSnapshots.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // Convert Firestore Timestamp to Date
+        expiryDate: data.expiryDate.toDate(),
+      } as Product;
+    });
 
-  if (filters.category && filters.category !== 'all') {
-    filteredProducts = filteredProducts.filter(p => p.category === filters.category);
-  }
+     if (filters.query) {
+        const lowerCaseQuery = filters.query.toLowerCase();
+        productsData = productsData.filter(p => p.name.toLowerCase().includes(lowerCaseQuery));
+    }
 
-  const totalCount = filteredProducts.length;
-
-  const page = filters.page || 1;
-  const limit = filters.limit || 8;
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-  return {
-    products: paginatedProducts.sort((a, b) => a.name.localeCompare(b.name)),
-    totalCount,
-  };
+    return { products: productsData, totalCount };
 }
 
-export async function getProduct(id: string): Promise<Product | undefined> {
-  return products.find(p => p.id === id);
-}
 
 export async function getAllCategories(): Promise<string[]> {
-  const categories = new Set(products.map(p => p.category));
-  return Array.from(categories).sort();
+    const productsRef = collection(db, "products");
+    const snapshot = await getDocs(productsRef);
+    const categories = new Set(snapshot.docs.map(doc => doc.data().category as string));
+    return Array.from(categories).sort();
 }
 
-/**
- * In a real app, this would save the image to a cloud storage bucket
- * and return the public URL. For this demo, we'll just return the data URI.
- */
-export async function saveImage(dataUri: string): Promise<string> {
-  await delay(1500); // Simulate upload time
-  // Here you would typically upload the file to a service like Cloud Storage for Firebase
-  // and get a public URL. For this demo, we'll just return the data URI itself
-  // as our "saved" URL. This is not efficient for a real app but works for prototyping.
-  console.log(`"Saving" image of length ${dataUri.length}`);
-  return dataUri;
-}
 
 export async function createProduct(values: ProductFormValues) {
   const validatedFields = productSchema.safeParse(values);
@@ -76,17 +109,14 @@ export async function createProduct(values: ProductFormValues) {
     };
   }
 
-  const newProduct: Product = {
-    id: uuidv4(),
-    ...validatedFields.data,
-  };
-
-  products.unshift(newProduct);
-  revalidatePath('/');
-
-  return {
-    success: 'Product created successfully!',
-  };
+  try {
+    await addDoc(collection(db, "products"), validatedFields.data);
+    revalidatePath('/');
+    return { success: 'Product created successfully!' };
+  } catch (e) {
+    console.error("Error adding document: ", e);
+    return { error: 'Failed to create product.' };
+  }
 }
 
 export async function updateProduct(id: string, values: ProductFormValues) {
@@ -98,33 +128,25 @@ export async function updateProduct(id: string, values: ProductFormValues) {
     };
   }
 
-  const index = products.findIndex(p => p.id === id);
-  if (index === -1) {
-    return {
-      error: 'Product not found!',
-    };
+  const productRef = doc(db, "products", id);
+
+  try {
+    await updateDoc(productRef, validatedFields.data);
+    revalidatePath('/');
+    return { success: 'Product updated successfully!' };
+  } catch (e) {
+    console.error("Error updating document: ", e);
+    return { error: 'Failed to update product.' };
   }
-
-  products[index] = { ...products[index], ...validatedFields.data };
-  revalidatePath('/');
-
-  return {
-    success: 'Product updated successfully!',
-  };
 }
 
 export async function deleteProduct(id: string) {
-  const index = products.findIndex(p => p.id === id);
-  if (index === -1) {
-    return {
-      error: 'Product not found!',
-    };
+  try {
+    await deleteDoc(doc(db, "products", id));
+    revalidatePath('/');
+    return { success: 'Product deleted successfully!' };
+  } catch (e) {
+    console.error("Error deleting document: ", e);
+    return { error: 'Failed to delete product.' };
   }
-
-  products.splice(index, 1);
-  revalidatePath('/');
-
-  return {
-    success: 'Product deleted successfully!',
-  };
 }

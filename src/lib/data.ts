@@ -1,3 +1,8 @@
+// This file is no longer the primary source of data.
+// The application has been updated to use Cloud Firestore.
+// You can use the `migrate-to-firestore` script to move this initial data
+// into your Firestore database.
+// See the instructions in the README.md file.
 import type { Product } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
