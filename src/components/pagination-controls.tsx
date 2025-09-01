@@ -109,9 +109,9 @@ export function PaginationControls({
   return (
     <div className="flex items-center justify-between">
       <div className="text-sm text-muted-foreground">
-        Showing{' '}
-        <strong>{(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, itemCount)}</strong> of{' '}
-        <strong>{itemCount}</strong> products
+        Hiển thị{' '}
+        <strong>{(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, itemCount)}</strong> trên{' '}
+        <strong>{itemCount}</strong> mặt hàng
       </div>
       <Pagination>
         <PaginationContent>
@@ -160,7 +160,7 @@ export function PaginationControls({
         </PaginationContent>
       </Pagination>
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Rows per page</span>
+        <span className="text-sm text-muted-foreground">Hàng trên trang</span>
          <Select
             value={String(itemsPerPage)}
             onValueChange={handleLimitChange}

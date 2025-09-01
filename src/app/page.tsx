@@ -40,9 +40,9 @@ async function ProductGrid({ query, category, page, limit, lastVisibleId }: { qu
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center col-span-full">
-        <h3 className="text-2xl font-bold tracking-tight">No products found</h3>
+        <h3 className="text-2xl font-bold tracking-tight">Không tìm thấy mặt hàng nào</h3>
         <p className="text-sm text-muted-foreground">
-          Try adjusting your search or filters.
+          Hãy thử điều chỉnh lại tìm kiếm hoặc bộ lọc.
         </p>
       </div>
     );
@@ -81,15 +81,15 @@ export default async function Home({ searchParams }: HomeProps) {
       <main className="flex flex-1 flex-col gap-6 p-4 md:p-8 container mx-auto">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Product Price Lookup
+            Quản Lý Hàng Hóa
           </h1>
           <p className="text-lg text-muted-foreground">
-            Search, filter, and manage your products with ease.
+            Tìm kiếm, lọc và quản lý các mặt hàng của bạn một cách dễ dàng.
           </p>
         </div>
 
         <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
-          <ProductSearch placeholder="Search by product name..." />
+          <ProductSearch placeholder="Tìm kiếm theo tên mặt hàng..." />
           <div className="flex w-full gap-4 md:w-auto">
              <ProductFilters categories={categories} />
           </div>

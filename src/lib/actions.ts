@@ -53,22 +53,28 @@ export async function getProducts(filters: {
   
   const productsCollection = collection(db, 'products');
   let q = query(productsCollection);
+  let countQuery = query(productsCollection);
 
   if (filters.category && filters.category !== 'all') {
     q = query(q, where('category', '==', filters.category));
+    countQuery = query(countQuery, where('category', '==', filters.category));
   }
     
   if (filters.query) {
     const searchTerm = filters.query.toLowerCase();
     const endTerm = searchTerm + '\uf8ff';
-    q = query(q, where('name_lowercase', '>=', searchTerm), where('name_lowercase', '<=', endTerm), orderBy('name_lowercase'));
-  } else {
+    q = query(q, where('name_lowercase', '>=', searchTerm), where('name_lowercase', '<=', endTerm));
+    countQuery = query(countQuery, where('name_lowercase', '>=', searchTerm), where('name_lowercase', '<=', endTerm));
+  } 
+  
+  // Apply orderBy after all where clauses
+  if (!filters.query) {
     q = query(q, orderBy('name'));
   }
 
 
-  // Get total count for pagination
-  const countSnapshot = await getCountFromServer(q);
+  // Get total count for pagination based on the same filters
+  const countSnapshot = await getCountFromServer(countQuery);
   const totalCount = countSnapshot.data().count;
 
   const pageLimit = filters.limit || 8;
@@ -112,7 +118,7 @@ export async function createProduct(values: ProductFormValues) {
 
   if (!validatedFields.success) {
     return {
-      error: 'Invalid fields!',
+      error: 'Dữ liệu không hợp lệ!',
     };
   }
   
@@ -127,10 +133,10 @@ export async function createProduct(values: ProductFormValues) {
     });
 
     revalidatePath('/');
-    return { success: 'Product created successfully!' };
+    return { success: 'Đã tạo mặt hàng thành công!' };
   } catch (e) {
-    console.error("Error adding document: ", e);
-    return { error: "Failed to create product." };
+    console.error("Lỗi khi thêm tài liệu: ", e);
+    return { error: "Không thể tạo mặt hàng." };
   }
 }
 
@@ -139,7 +145,7 @@ export async function updateProduct(id: string, values: ProductFormValues) {
 
   if (!validatedFields.success) {
     return {
-      error: 'Invalid fields!',
+      error: 'Dữ liệu không hợp lệ!',
     };
   }
   
@@ -154,10 +160,10 @@ export async function updateProduct(id: string, values: ProductFormValues) {
         imageUrl: savedImageUrl,
     });
     revalidatePath('/');
-    return { success: 'Product updated successfully!' };
+    return { success: 'Đã cập nhật mặt hàng thành công!' };
   } catch (e) {
-     console.error("Error updating document: ", e);
-    return { error: "Failed to update product." };
+     console.error("Lỗi khi cập nhật tài liệu: ", e);
+    return { error: "Không thể cập nhật mặt hàng." };
   }
 }
 
@@ -169,14 +175,14 @@ export async function deleteProduct(id: string) {
       const imageUrl = docSnap.data().imageUrl;
       if(imageUrl && imageUrl.includes('firebasestorage')){
          const imageRef = ref(storage, imageUrl);
-         await deleteObject(imageRef).catch(e => console.error("Error deleting image from storage:", e));
+         await deleteObject(imageRef).catch(e => console.error("Lỗi xóa ảnh từ storage:", e));
       }
     }
     await deleteDoc(docRef);
     revalidatePath('/');
-    return { success: 'Product deleted successfully!' };
+    return { success: 'Đã xóa mặt hàng thành công!' };
   } catch(e) {
-    console.error("Error deleting document: ", e);
-    return { error: "Failed to delete product." };
+    console.error("Lỗi xóa tài liệu: ", e);
+    return { error: "Không thể xóa mặt hàng." };
   }
 }

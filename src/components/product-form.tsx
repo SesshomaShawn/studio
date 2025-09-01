@@ -30,6 +30,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ImageUpload } from "./image-upload";
+import { vi } from "date-fns/locale";
 
 type ProductFormProps = {
   product?: Product;
@@ -86,7 +87,7 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
 
       if (result.success) {
         toast({
-          title: isEditMode ? "Product Updated" : "Product Created",
+          title: isEditMode ? "Đã cập nhật mặt hàng" : "Đã tạo mặt hàng",
           description: result.success,
         });
         onOpenChange(false);
@@ -94,7 +95,7 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
       } else {
         toast({
           variant: "destructive",
-          title: "An error occurred",
+          title: "Đã xảy ra lỗi",
           description: result.error,
         });
       }
@@ -110,9 +111,9 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
     }}>
       <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? "Edit Product" : "Add New Product"}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Sửa thông tin mặt hàng" : "Thêm mặt hàng mới"}</DialogTitle>
           <DialogDescription>
-            {isEditMode ? "Update the details of your product." : "Fill in the details to add a new product."}
+            {isEditMode ? "Cập nhật thông tin chi tiết cho mặt hàng của bạn." : "Điền thông tin chi tiết để thêm một mặt hàng mới."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -122,7 +123,7 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Image</FormLabel>
+                  <FormLabel>Ảnh mặt hàng</FormLabel>
                   <FormControl>
                      <ImageUpload
                         value={field.value}
@@ -138,9 +139,9 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Name</FormLabel>
+                  <FormLabel>Tên mặt hàng</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Organic Bananas" {...field} />
+                    <Input placeholder="ví dụ: Mì ăn liền Hảo Hảo" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -151,9 +152,9 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Mô tả</FormLabel>
                   <FormControl>
-                    <Input placeholder="A brief description of the product" {...field} />
+                    <Input placeholder="Mô tả ngắn về mặt hàng" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,9 +166,9 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price</FormLabel>
+                    <FormLabel>Giá (VND)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="9.99" {...field} />
+                      <Input type="number" step="1000" placeholder="5000" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -178,9 +179,9 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
                 name="unit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit</FormLabel>
+                    <FormLabel>Đơn vị tính</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., kg, lb, piece" {...field} />
+                      <Input placeholder="ví dụ: gói, chai, thùng" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,7 +194,7 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock Quantity</FormLabel>
+                    <FormLabel>Tồn kho</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="100" {...field} />
                     </FormControl>
@@ -206,7 +207,7 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
                   name="expiryDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col pt-2">
-                      <FormLabel>Expiry Date</FormLabel>
+                      <FormLabel>Hạn sử dụng</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -218,9 +219,9 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
                               )}
                             >
                               {field.value ? (
-                                format(field.value, "PPP")
+                                format(field.value, "dd/MM/yyyy", { locale: vi })
                               ) : (
-                                <span>Pick a date</span>
+                                <span>Chọn một ngày</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -228,6 +229,7 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
+                            locale={vi}
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
@@ -246,9 +248,9 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>Ngành hàng</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Fruits & Vegetables" {...field} />
+                    <Input placeholder="ví dụ: Thực phẩm khô" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -256,11 +258,11 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-                Cancel
+                Hủy
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditMode ? "Save Changes" : "Create Product"}
+                {isEditMode ? "Lưu thay đổi" : "Tạo mặt hàng"}
               </Button>
             </DialogFooter>
           </form>

@@ -10,20 +10,20 @@ export type Product = {
   expiryDate: Date;
   imageUrl: string;
   category: string;
+  name_lowercase: string;
 };
 
 export const productSchema = z.object({
-  name: z.string().min(3, { message: "Name must be at least 3 characters." }).transform(val => val.trim()),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  price: z.coerce.number().positive({ message: "Price must be a positive number." }),
-  unit: z.string().min(1, { message: "Unit is required." }),
-  stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
+  name: z.string().min(3, { message: "Tên phải có ít nhất 3 ký tự." }).transform(val => val.trim()),
+  description: z.string().min(10, { message: "Mô tả phải có ít nhất 10 ký tự." }),
+  price: z.coerce.number().positive({ message: "Giá phải là một số dương." }),
+  unit: z.string().min(1, { message: "Đơn vị tính là bắt buộc." }),
+  stock: z.coerce.number().int().nonnegative({ message: "Tồn kho phải là số nguyên không âm." }),
   expiryDate: z.date({
-    required_error: "An expiry date is required.",
+    required_error: "Hạn sử dụng là bắt buộc.",
   }),
-  // Allow any string for imageUrl, as it can be a URL or a data URI
-  imageUrl: z.string().min(1, { message: "Image is required." }),
-  category: z.string().min(2, { message: "Category must be at least 2 characters." }),
+  imageUrl: z.string().min(1, { message: "Ảnh là bắt buộc." }),
+  category: z.string().min(2, { message: "Ngành hàng phải có ít nhất 2 ký tự." }),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;

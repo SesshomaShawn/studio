@@ -20,9 +20,9 @@ import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 
 function formatPrice(price: number) {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("vi-VN", {
       style: "currency",
-      currency: "USD",
+      currency: "VND",
     }).format(price);
 }
 
@@ -32,8 +32,8 @@ export function CartDrawer() {
 
   const handleCheckout = () => {
     toast({
-        title: "Checkout Successful!",
-        description: `Your order of ${cartItems.length} item(s) for a total of ${formatPrice(getCartTotal())} has been placed.`,
+        title: "Thanh toán thành công!",
+        description: `Đơn hàng của bạn gồm ${cartItems.length} mặt hàng với tổng giá trị ${formatPrice(getCartTotal())} đã được đặt.`,
     })
     clearCart();
   }
@@ -51,12 +51,12 @@ export function CartDrawer() {
               {cartItems.reduce((acc, item) => acc + item.quantity, 0)}
             </Badge>
           )}
-          <span className="sr-only">Open cart</span>
+          <span className="sr-only">Mở giỏ hàng</span>
         </Button>
       </SheetTrigger>
       <SheetContent className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>Your Cart ({cartItems.reduce((acc, item) => acc + item.quantity, 0)})</SheetTitle>
+          <SheetTitle>Giỏ hàng của bạn ({cartItems.reduce((acc, item) => acc + item.quantity, 0)})</SheetTitle>
         </SheetHeader>
         {cartItems.length > 0 ? (
           <>
@@ -96,13 +96,13 @@ export function CartDrawer() {
             <SheetFooter className="mt-auto flex-col space-y-4">
                 <Separator />
                 <div className="flex justify-between items-center font-semibold text-lg">
-                    <span>Total</span>
+                    <span>Tổng cộng</span>
                     <span>{formatPrice(getCartTotal())}</span>
                 </div>
                  <div className="flex gap-2">
-                    <Button variant="outline" className="w-full" onClick={clearCart}>Clear Cart</Button>
+                    <Button variant="outline" className="w-full" onClick={clearCart}>Dọn giỏ hàng</Button>
                     <SheetClose asChild>
-                        <Button className="w-full" onClick={handleCheckout}>Checkout</Button>
+                        <Button className="w-full" onClick={handleCheckout}>Thanh toán</Button>
                     </SheetClose>
                 </div>
             </SheetFooter>
@@ -110,8 +110,8 @@ export function CartDrawer() {
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <ShoppingCart className="h-16 w-16 text-muted-foreground" />
-            <p className="mt-4 text-lg font-semibold">Your cart is empty</p>
-            <p className="text-muted-foreground">Add some products to get started!</p>
+            <p className="mt-4 text-lg font-semibold">Giỏ hàng của bạn đang trống</p>
+            <p className="text-muted-foreground">Hãy thêm vài mặt hàng để bắt đầu nhé!</p>
           </div>
         )}
       </SheetContent>

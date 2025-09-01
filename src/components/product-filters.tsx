@@ -33,10 +33,10 @@ export function ProductFilters({ categories }: { categories: string[] }) {
         onValueChange={handleCategoryChange}
       >
         <SelectTrigger className="w-full md:w-[180px]">
-          <SelectValue placeholder="Filter by category" />
+          <SelectValue placeholder="Lọc theo ngành hàng" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Categories</SelectItem>
+          <SelectItem value="all">Tất cả ngành hàng</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category} value={category}>
               {category}

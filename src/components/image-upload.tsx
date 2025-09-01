@@ -54,12 +54,12 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
           videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.error('Error accessing camera:', error);
+        console.error('Lỗi truy cập camera:', error);
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings.',
+          title: 'Truy cập Camera bị từ chối',
+          description: 'Vui lòng cấp quyền sử dụng camera trong cài đặt trình duyệt của bạn.',
         });
       }
     };
@@ -81,8 +81,8 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
     if (file.size > MAX_FILE_SIZE) {
         toast({
             variant: "destructive",
-            title: "File too large",
-            description: "Please select an image smaller than 4MB.",
+            title: "Tệp quá lớn",
+            description: "Vui lòng chọn ảnh nhỏ hơn 4MB.",
         });
         return;
     }
@@ -97,11 +97,11 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
         };
         reader.readAsDataURL(file);
     } catch (error) {
-        console.error("Error saving image:", error);
+        console.error("Lỗi lưu ảnh:", error);
         toast({
             variant: "destructive",
-            title: "Upload failed",
-            description: "Could not save the image. Please try again.",
+            title: "Tải lên thất bại",
+            description: "Không thể lưu ảnh. Vui lòng thử lại.",
         });
     } finally {
         setIsUploading(false);
@@ -125,11 +125,11 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
             onChange(savedUrl);
             setCameraOpen(false);
         } catch (error) {
-             console.error("Error saving image:", error);
+             console.error("Lỗi lưu ảnh:", error);
             toast({
                 variant: "destructive",
-                title: "Capture failed",
-                description: "Could not save the captured image. Please try again.",
+                title: "Chụp ảnh thất bại",
+                description: "Không thể lưu ảnh đã chụp. Vui lòng thử lại.",
             });
         } finally {
             setIsUploading(false);
@@ -151,14 +151,14 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                <AlertDialogTitle>Remove Image?</AlertDialogTitle>
+                <AlertDialogTitle>Xóa ảnh?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This will remove the current product image. You can upload a new one.
+                    Thao tác này sẽ xóa ảnh mặt hàng hiện tại. Bạn có thể tải lên ảnh mới.
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onChange('')}>Remove</AlertDialogAction>
+                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onChange('')}>Xóa</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
            </AlertDialog>
@@ -168,7 +168,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
       {isUploading && (
           <div className="flex items-center justify-center p-4 border-2 border-dashed rounded-md">
               <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-              <p>Uploading...</p>
+              <p>Đang tải lên...</p>
           </div>
       )}
 
@@ -176,7 +176,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
          <Tabs defaultValue="upload" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="upload" onClick={() => setCameraOpen(false)}>
-                    <ImageIcon className="mr-2 h-4 w-4" /> Upload
+                    <ImageIcon className="mr-2 h-4 w-4" /> Tải lên
                 </TabsTrigger>
                 <TabsTrigger value="camera" onClick={() => setCameraOpen(true)}>
                     <Camera className="mr-2 h-4 w-4" /> Camera
@@ -195,8 +195,8 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                         accept="image/png, image/jpeg, image/gif"
                     />
                     <ImageIcon className="h-10 w-10 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">Click or tap to select an image</p>
-                    <p className="text-xs text-muted-foreground">(Max 4MB)</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Nhấn để chọn một ảnh</p>
+                    <p className="text-xs text-muted-foreground">(Tối đa 4MB)</p>
                 </div>
             </TabsContent>
             <TabsContent value="camera">
@@ -207,26 +207,26 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                          {hasCameraPermission === false && (
                             <div className='flex flex-col items-center text-destructive'>
                                 <VideoOff className="h-10 w-10" />
-                                <p>Camera not available</p>
+                                <p>Không có camera</p>
                             </div>
                         )}
                          {hasCameraPermission === null && (
                             <div className='flex flex-col items-center text-muted-foreground'>
                                 <Loader2 className="h-10 w-10 animate-spin" />
-                                <p>Starting camera...</p>
+                                <p>Đang khởi động camera...</p>
                             </div>
                         )}
                     </div>
                      {hasCameraPermission === false && (
                          <Alert variant="destructive">
-                            <AlertTitle>Camera Access Required</AlertTitle>
+                            <AlertTitle>Yêu cầu truy cập Camera</AlertTitle>
                             <AlertDescription>
-                                Please allow camera access to use this feature. You may need to change permissions in your browser settings.
+                                Vui lòng cho phép truy cập camera để sử dụng tính năng này. Bạn có thể cần thay đổi quyền trong cài đặt trình duyệt.
                             </AlertDescription>
                         </Alert>
                      )}
                      <Button onClick={handleCapture} disabled={!hasCameraPermission || isUploading} className="w-full">
-                        <Camera className="mr-2 h-4 w-4" /> Capture Photo
+                        <Camera className="mr-2 h-4 w-4" /> Chụp ảnh
                     </Button>
                 </div>
             </TabsContent>

@@ -37,14 +37,14 @@ export function DeleteConfirmationDialog({
       const result = await deleteProduct(productId);
       if (result.success) {
         toast({
-          title: "Product Deleted",
+          title: "Đã xóa mặt hàng",
           description: result.success,
         });
         onOpenChange(false);
       } else {
         toast({
           variant: "destructive",
-          title: "An error occurred",
+          title: "Đã xảy ra lỗi",
           description: result.error,
         });
       }
@@ -55,21 +55,21 @@ export function DeleteConfirmationDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Bạn có chắc chắn không?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the product
+            Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn mặt hàng
             <span className="font-semibold text-foreground"> {productName}</span>.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
           <Button
             variant="destructive"
             onClick={handleDelete}
             disabled={isPending}
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete
+            Xóa
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

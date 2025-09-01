@@ -16,14 +16,14 @@ export function AppHeader() {
         <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
           <div className="flex gap-2 items-center">
             <Icons.logo className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg hidden sm:inline-block">Product Price Lookup</span>
+            <span className="font-bold text-lg hidden sm:inline-block">Quản Lý Hàng Hóa</span>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="flex items-center space-x-2">
               <CartDrawer />
               <Button onClick={() => setCreateFormOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Product
+                Thêm Mặt Hàng
               </Button>
             </nav>
           </div>

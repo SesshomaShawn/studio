@@ -1,113 +1,84 @@
 import type { Product } from './types';
-import { v4 as uuidv4 } from 'uuid';
-
-// In a real application, this would be a database.
-// This file is now used to SEED the initial data into Firestore.
-// You can add your custom data here before running the seed script.
-//
-// ĐỂ THÊM DỮ LIỆU CỦA RIÊNG BẠN:
-// 1. Sao chép khối đối tượng sản phẩm mẫu bên dưới.
-// 2. Dán nó vào trong dấu ngoặc vuông `[]` của mảng `initialProducts`.
-// 3. Thay đổi các giá trị (ví dụ: "Tên sản phẩm của bạn") thành thông tin chi tiết về sản phẩm của bạn.
-// 4. Thêm bao nhiêu đối tượng sản phẩm tùy thích, phân cách mỗi đối tượng bằng dấu phẩy.
-/*
- * Mẫu đối tượng sản phẩm để sao chép:
- *
-  {
-    // Firestore sẽ tự động tạo ID, bạn không cần cung cấp trường này.
-    name: 'Tên sản phẩm của bạn',
-    description: 'Mô tả chi tiết về sản phẩm của bạn.',
-    price: 19.99, // Giá sản phẩm (dạng số)
-    unit: 'cái', // Đơn vị tính (ví dụ: kg, hộp, cái)
-    stock: 100, // Số lượng tồn kho (dạng số nguyên)
-    expiryDate: new Date('YYYY-MM-DD'), // Ngày hết hạn, thay YYYY-MM-DD
-    imageUrl: 'https://picsum.photos/400/300', // URL hình ảnh sản phẩm
-    category: 'Danh mục của bạn', // Danh mục sản phẩm
-  },
-
-*/
 
 export const initialProducts: Omit<Product, 'id'>[] = [
-  // Dán các đối tượng sản phẩm tùy chỉnh của bạn vào đây.
-  // Ví dụ:
   {
-    name: 'Organic Bananas',
-    description: 'A bunch of fresh, organic bananas.',
-    price: 1.99,
-    unit: 'bunch',
-    stock: 150,
-    expiryDate: new Date('2025-08-15'),
-    imageUrl: 'https://picsum.photos/400/300?random=1',
-    category: 'Fruits',
-  },
-  {
-    name: 'Whole Wheat Bread',
-    description: 'A healthy loaf of whole wheat bread.',
-    price: 3.49,
-    unit: 'loaf',
-    stock: 80,
-    expiryDate: new Date('2025-07-28'),
-    imageUrl: 'https://picsum.photos/400/300?random=2',
-    category: 'Bakery',
-  },
-  {
-    name: 'Free-Range Eggs',
-    description: 'A dozen large, brown free-range eggs.',
-    price: 4.99,
-    unit: 'dozen',
-    stock: 120,
-    expiryDate: new Date('2025-08-20'),
-    imageUrl: 'https://picsum.photos/400/300?random=3',
-    category: 'Dairy & Eggs',
-  },
-  {
-    name: 'Cheddar Cheese',
-    description: 'A block of sharp cheddar cheese.',
-    price: 6.99,
-    unit: 'block',
-    stock: 60,
-    expiryDate: new Date('2025-09-30'),
-    imageUrl: 'https://picsum.photos/400/300?random=4',
-    category: 'Dairy & Eggs',
-  },
-   {
-    name: 'Avocado',
-    description: 'Creamy and delicious Hass avocado.',
-    price: 1.50,
-    unit: 'piece',
+    name: 'Mì ăn liền Hảo Hảo',
+    description: 'Mì ăn liền vị tôm chua cay, một lựa chọn nhanh chóng và ngon miệng.',
+    price: 4500,
+    unit: 'gói',
     stock: 200,
-    expiryDate: new Date('2025-07-25'),
+    expiryDate: new Date('2025-12-31'),
+    imageUrl: 'https://picsum.photos/400/300?random=1',
+    category: 'Thực phẩm khô',
+  },
+  {
+    name: 'Nước mắm Nam Ngư',
+    description: 'Nước mắm Nam Ngư 500ml, đậm đà hương vị truyền thống.',
+    price: 25000,
+    unit: 'chai',
+    stock: 80,
+    expiryDate: new Date('2026-06-30'),
+    imageUrl: 'https://picsum.photos/400/300?random=2',
+    category: 'Gia vị',
+  },
+  {
+    name: 'Dầu ăn Simply',
+    description: 'Dầu đậu nành Simply 1 lít, tốt cho tim mạch.',
+    price: 45000,
+    unit: 'chai',
+    stock: 100,
+    expiryDate: new Date('2026-01-15'),
+    imageUrl: 'https://picsum.photos/400/300?random=3',
+    category: 'Gia vị',
+  },
+  {
+    name: 'Sữa đặc Ông Thọ',
+    description: 'Sữa đặc có đường Ông Thọ, lon 380g, dùng để pha cà phê hoặc làm bánh.',
+    price: 22000,
+    unit: 'lon',
+    stock: 150,
+    expiryDate: new Date('2025-10-20'),
+    imageUrl: 'https://picsum.photos/400/300?random=4',
+    category: 'Đồ hộp & Sữa',
+  },
+  {
+    name: 'Bánh ChocoPie',
+    description: 'Hộp bánh ChocoPie Orion 12 cái, vỏ bánh mềm xốp phủ socola.',
+    price: 54000,
+    unit: 'hộp',
+    stock: 70,
+    expiryDate: new Date('2025-09-01'),
     imageUrl: 'https://picsum.photos/400/300?random=5',
-    category: 'Fruits',
+    category: 'Bánh kẹo',
   },
   {
-    name: 'Greek Yogurt',
-    description: 'Plain Greek yogurt, high in protein.',
-    price: 4.29,
-    unit: 'tub',
-    stock: 75,
-    expiryDate: new Date('2025-08-10'),
+    name: 'Nước ngọt Coca-Cola',
+    description: 'Lốc 6 lon Coca-Cola 330ml, giải khát sảng khoái.',
+    price: 50000,
+    unit: 'lốc',
+    stock: 120,
+    expiryDate: new Date('2025-11-11'),
     imageUrl: 'https://picsum.photos/400/300?random=6',
-    category: 'Dairy & Eggs',
+    category: 'Đồ uống',
   },
   {
-    name: 'Baby Spinach',
-    description: 'A bag of fresh baby spinach.',
-    price: 3.99,
-    unit: 'bag',
-    stock: 90,
-    expiryDate: new Date('2025-08-01'),
+    name: 'Bột giặt OMO',
+    description: 'Túi bột giặt OMO 4kg, trắng sáng, xoáy bay vết bẩn cứng đầu.',
+    price: 150000,
+    unit: 'túi',
+    stock: 50,
+    expiryDate: new Date('2028-01-01'),
     imageUrl: 'https://picsum.photos/400/300?random=7',
-    category: 'Vegetables',
+    category: 'Hóa mỹ phẩm',
   },
   {
-    name: 'Sourdough Bread',
-    description: 'Artisanal sourdough loaf with a crispy crust.',
-    price: 5.99,
-    unit: 'loaf',
-    stock: 40,
-    expiryDate: new Date('2025-07-26'),
+    name: 'Khăn giấy Pulppy',
+    description: 'Lốc 10 cuộn khăn giấy Pulppy không lõi, mềm mại và dai.',
+    price: 75000,
+    unit: 'lốc',
+    stock: 90,
+    expiryDate: new Date('2029-01-01'),
     imageUrl: 'https://picsum.photos/400/300?random=8',
-    category: 'Bakery',
+    category: 'Hóa mỹ phẩm',
   },
 ];

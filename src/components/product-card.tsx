@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/lib/types";
 import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { ProductForm } from "./product-form";
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 import { Calendar, DollarSign, Package, Pencil, ShoppingCart, Trash2 } from "lucide-react";
@@ -36,8 +37,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = () => {
     addToCart(product);
     toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
+      title: "Đã thêm vào giỏ",
+      description: `${product.name} đã được thêm vào giỏ hàng của bạn.`,
     });
   };
 
@@ -56,7 +57,7 @@ export function ProductCard({ product }: ProductCardProps) {
             />
              <Button size="sm" className="absolute bottom-2 right-2" onClick={handleAddToCart} disabled={product.stock === 0}>
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                Add to Cart
+                Thêm vào giỏ
             </Button>
           </div>
           <div className="p-6 pb-2">
@@ -70,33 +71,33 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-primary" />
               <span className="font-medium text-foreground text-base">
-                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(product.price)}
+                {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
               </span>
               <span>/ {product.unit}</span>
             </div>
             <div className="flex items-center gap-2">
               <Package className="h-4 w-4 text-primary" />
-              <span>{product.stock} items in stock</span>
+              <span>Còn {product.stock} sản phẩm trong kho</span>
               {product.stock === 0 ? (
-                <Badge variant="destructive">Out of Stock</Badge>
+                <Badge variant="destructive">Hết hàng</Badge>
               ) : isLowStock ? (
-                <Badge variant="destructive">Low Stock</Badge>
+                <Badge variant="destructive">Sắp hết</Badge>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />
-              <span>Expires on {format(new Date(product.expiryDate), "MMM d, yyyy")}</span>
-               {isExpired && <Badge variant="destructive">Expired</Badge>}
+              <span>HSD: {format(new Date(product.expiryDate), "dd/MM/yyyy", { locale: vi })}</span>
+               {isExpired && <Badge variant="destructive">Hết hạn</Badge>}
             </div>
           </div>
         </CardContent>
         <CardFooter className="bg-muted/50 p-4 mt-auto">
           <div className="flex w-full justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditFormOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" /> Edit
+              <Pencil className="mr-2 h-4 w-4" /> Sửa
             </Button>
             <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
+              <Trash2 className="mr-2 h-4 w-4" /> Xóa
             </Button>
           </div>
         </CardFooter>

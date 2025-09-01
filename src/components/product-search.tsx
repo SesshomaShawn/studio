@@ -35,26 +35,26 @@ export function ProductSearch({ placeholder }: { placeholder: string }) {
     } else {
       params.delete("query");
     }
+    // Khi tìm kiếm, luôn quay về trang đầu tiên
+    params.set("page", "1"); 
+    params.delete("lastVisibleId");
+    
     startTransition(() => {
       router.replace(`${pathname}?${params.toString()}`);
     });
   };
 
-  const debouncedSearch = useCallback(debounce(handleSearch, 300), [searchParams, pathname, router]);
+  const debouncedSearch = useCallback(debounce(handleSearch, 300), []);
 
   useEffect(() => {
-    const currentQuery = searchParams.get("query") || "";
-    if (query !== currentQuery) {
-        debouncedSearch(query);
-    }
-  }, [query, searchParams, debouncedSearch]);
+    // Chỉ gọi hàm tìm kiếm đã được debounce khi query thay đổi
+    debouncedSearch(query);
+  }, [query, debouncedSearch]);
 
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // handleSearch(query);
-    // Since search happens on type, we can just ensure the final query is submitted
-    // Or do nothing, as it's already searching.
+    handleSearch(query);
   };
 
 
