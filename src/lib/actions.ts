@@ -1,115 +1,59 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  where,
-  limit,
-  startAfter,
-  getDoc,
-  getCountFromServer,
-  orderBy,
-} from 'firebase/firestore';
-import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
-import { db, storage } from './firebase';
 import type { Product, ProductFormValues } from './types';
+import { initialProducts } from './data';
 import { productSchema } from './types';
 
-// In a real app, this would save the image to a cloud storage bucket
-// and return the public URL.
-export async function saveImage(dataUri: string): Promise<string> {
-    if (!dataUri.startsWith('data:image')) {
-        // If it's not a new data URI, assume it's an existing URL and return it.
-        return dataUri;
-    }
-    const blobType = dataUri.substring(dataUri.indexOf(':') + 1, dataUri.indexOf(';'));
-    const fileExtension = blobType.split('/')[1];
-    const storageRef = ref(storage, `products/${Date.now()}.${fileExtension}`);
-    
-    // We need to remove the metadata from the data URI before uploading.
-    const base64Data = dataUri.split(',')[1];
+// NOTE: Since we are not using a database, these actions will not persist.
+// The data will reset on every server restart or page reload.
 
-    await uploadString(storageRef, base64Data, 'base64', {
-        contentType: blobType,
-    });
-    
-    const downloadUrl = await getDownloadURL(storageRef);
-    return downloadUrl;
+let products: Product[] = initialProducts.map((p, i) => ({
+    ...p,
+    id: (i + 1).toString(),
+    name_lowercase: p.name.toLowerCase()
+}));
+
+export async function saveImage(dataUri: string): Promise<string> {
+    // In a local-only setup, we can't "save" the image anywhere permanently.
+    // If it's a new base64 image, we just return it. The browser will display it,
+    // but it will be gone on the next reload.
+    return dataUri;
 }
+
 
 export async function getProducts(filters: {
   query?: string;
   category?: string;
   page?: number;
   limit?: number;
-  lastVisibleId?: string;
 }): Promise<{ products: Product[]; totalCount: number, lastVisibleId?: string }> {
-  
-  const productsCollection = collection(db, 'products');
-  let q = query(productsCollection);
-  let countQuery = query(productsCollection);
+
+  let filteredProducts = products;
 
   if (filters.category && filters.category !== 'all') {
-    q = query(q, where('category', '==', filters.category));
-    countQuery = query(countQuery, where('category', '==', filters.category));
+    filteredProducts = filteredProducts.filter(p => p.category === filters.category);
   }
     
   if (filters.query) {
     const searchTerm = filters.query.toLowerCase();
-    const endTerm = searchTerm + '\uf8ff';
-    q = query(q, where('name_lowercase', '>=', searchTerm), where('name_lowercase', '<=', endTerm));
-    countQuery = query(countQuery, where('name_lowercase', '>=', searchTerm), where('name_lowercase', '<=', endTerm));
+    filteredProducts = filteredProducts.filter(p => p.name_lowercase.includes(searchTerm));
   } 
   
-  // Apply orderBy after all where clauses
-  if (!filters.query) {
-    q = query(q, orderBy('name'));
-  }
-
-
-  // Get total count for pagination based on the same filters
-  const countSnapshot = await getCountFromServer(countQuery);
-  const totalCount = countSnapshot.data().count;
-
+  const totalCount = filteredProducts.length;
   const pageLimit = filters.limit || 8;
-  
-  if (filters.page && filters.page > 1 && filters.lastVisibleId) {
-    const lastVisibleSnap = await getDoc(doc(db, 'products', filters.lastVisibleId));
-    if (lastVisibleSnap.exists()) {
-      q = query(q, startAfter(lastVisibleSnap));
-    }
-  }
-  
-  q = query(q, limit(pageLimit));
-  
-  const snapshot = await getDocs(q);
+  const page = filters.page || 1;
+  const startIndex = (page - 1) * pageLimit;
+  const endIndex = startIndex + pageLimit;
 
-  const products: Product[] = snapshot.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      ...data,
-      // Convert Firestore Timestamp to Date
-      expiryDate: data.expiryDate.toDate(),
-    } as Product;
-  });
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-  const lastVisibleId = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : undefined;
-
-  return { products, totalCount, lastVisibleId };
+  return { products: paginatedProducts, totalCount };
 }
 
 
 export async function getAllCategories(): Promise<string[]> {
-  const productsCollection = collection(db, 'products');
-  const snapshot = await getDocs(productsCollection);
-  const categories = new Set(snapshot.docs.map(doc => doc.data().category as string));
+  const categories = new Set(products.map(p => p.category));
   return Array.from(categories).sort();
 }
 
@@ -122,22 +66,11 @@ export async function createProduct(values: ProductFormValues) {
     };
   }
   
-  try {
-     const { imageUrl, ...productData } = validatedFields.data;
-     const savedImageUrl = await saveImage(imageUrl);
-    
-    await addDoc(collection(db, 'products'), {
-        ...productData,
-        name_lowercase: productData.name.toLowerCase(),
-        imageUrl: savedImageUrl,
-    });
+  // This will not persist.
+  console.log("Creating product (local only):", validatedFields.data);
 
-    revalidatePath('/');
-    return { success: 'Đã tạo mặt hàng thành công!' };
-  } catch (e) {
-    console.error("Lỗi khi thêm tài liệu: ", e);
-    return { error: "Không thể tạo mặt hàng." };
-  }
+  revalidatePath('/');
+  return { success: 'Đã tạo mặt hàng (chỉ cục bộ)!' };
 }
 
 export async function updateProduct(id: string, values: ProductFormValues) {
@@ -149,40 +82,17 @@ export async function updateProduct(id: string, values: ProductFormValues) {
     };
   }
   
-  const docRef = doc(db, 'products', id);
-  try {
-    const { imageUrl, ...productData } = validatedFields.data;
-    const savedImageUrl = await saveImage(imageUrl);
-
-    await updateDoc(docRef, {
-        ...productData,
-        name_lowercase: productData.name.toLowerCase(),
-        imageUrl: savedImageUrl,
-    });
-    revalidatePath('/');
-    return { success: 'Đã cập nhật mặt hàng thành công!' };
-  } catch (e) {
-     console.error("Lỗi khi cập nhật tài liệu: ", e);
-    return { error: "Không thể cập nhật mặt hàng." };
-  }
+  // This will not persist.
+  console.log(`Updating product ${id} (local only):`, validatedFields.data);
+  
+  revalidatePath('/');
+  return { success: 'Đã cập nhật mặt hàng (chỉ cục bộ)!' };
 }
 
 export async function deleteProduct(id: string) {
-  const docRef = doc(db, 'products', id);
-   try {
-    const docSnap = await getDoc(docRef);
-    if(docSnap.exists()){
-      const imageUrl = docSnap.data().imageUrl;
-      if(imageUrl && imageUrl.includes('firebasestorage')){
-         const imageRef = ref(storage, imageUrl);
-         await deleteObject(imageRef).catch(e => console.error("Lỗi xóa ảnh từ storage:", e));
-      }
-    }
-    await deleteDoc(docRef);
-    revalidatePath('/');
-    return { success: 'Đã xóa mặt hàng thành công!' };
-  } catch(e) {
-    console.error("Lỗi xóa tài liệu: ", e);
-    return { error: "Không thể xóa mặt hàng." };
-  }
+   // This will not persist.
+  console.log(`Deleting product ${id} (local only)`);
+  
+  revalidatePath('/');
+  return { success: 'Đã xóa mặt hàng (chỉ cục bộ)!' };
 }
