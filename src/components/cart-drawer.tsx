@@ -37,6 +37,18 @@ export function CartDrawer() {
     })
     clearCart();
   }
+  
+  const handleQuantityChange = (itemId: string, value: string) => {
+    if (value === "") {
+        updateQuantity(itemId, 0);
+        return;
+    }
+    const newQuantity = parseFloat(value);
+    if (!isNaN(newQuantity)) {
+        updateQuantity(itemId, newQuantity);
+    }
+  }
+
 
   return (
     <Sheet>
@@ -78,12 +90,14 @@ export function CartDrawer() {
                        <div className="flex items-center gap-2 mt-2">
                          <Input
                             type="number"
-                            min="1"
+                            step="0.1"
+                            min="0"
                             max={item.stock}
                             value={item.quantity}
-                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
-                            className="h-8 w-16"
+                            onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                            className="h-8 w-20"
                          />
+                         <span className="text-sm text-muted-foreground">{item.unit}</span>
                       </div>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)}>
@@ -93,16 +107,16 @@ export function CartDrawer() {
                 ))}
               </div>
             </ScrollArea>
-            <SheetFooter className="mt-auto flex-col space-y-4">
+            <SheetFooter className="mt-auto flex-col space-y-4 pt-4">
                 <Separator />
                 <div className="flex justify-between items-center font-semibold text-lg">
                     <span>Tổng cộng</span>
                     <span>{formatPrice(getCartTotal())}</span>
                 </div>
-                 <div className="flex gap-2">
-                    <Button variant="outline" className="w-full" onClick={clearCart}>Dọn giỏ hàng</Button>
+                 <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" onClick={clearCart}>Dọn giỏ hàng</Button>
                     <SheetClose asChild>
-                        <Button className="w-full" onClick={handleCheckout}>Thanh toán</Button>
+                        <Button onClick={handleCheckout}>Thanh toán</Button>
                     </SheetClose>
                 </div>
             </SheetFooter>

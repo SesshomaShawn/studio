@@ -42,9 +42,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+        removeFromCart(productId);
+        return;
+    }
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity: Math.min(Math.max(quantity, 1), item.stock) } : item
+        item.id === productId ? { ...item, quantity: Math.min(quantity, item.stock) } : item
       )
     );
   };
