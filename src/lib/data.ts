@@ -1,100 +1,45 @@
-// This file is no longer the primary source of data.
-// The application has been updated to use Cloud Firestore.
-// You can use the `migrate-to-firestore` script to move this initial data
-// into your Firestore database.
-// See the instructions in the README.md file.
 import type { Product } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 // In a real application, this would be a database.
 // For this demo, we're using an in-memory array.
+//
+// ĐỂ THÊM DỮ LIỆU CỦA RIÊNG BẠN:
+// 1. Sao chép khối đối tượng sản phẩm mẫu bên dưới.
+// 2. Dán nó vào trong dấu ngoặc vuông `[]` của mảng `products`.
+// 3. Thay đổi các giá trị (ví dụ: "Tên sản phẩm của bạn") thành thông tin chi tiết về sản phẩm của bạn.
+// 4. Thêm bao nhiêu đối tượng sản phẩm tùy thích, phân cách mỗi đối tượng bằng dấu phẩy.
+/*
+ * Mẫu đối tượng sản phẩm để sao chép:
+ *
+  {
+    id: uuidv4(), // Tạo ID duy nhất cho mỗi sản phẩm
+    name: 'Tên sản phẩm của bạn',
+    description: 'Mô tả chi tiết về sản phẩm của bạn.',
+    price: 19.99, // Giá sản phẩm (dạng số)
+    unit: 'cái', // Đơn vị tính (ví dụ: kg, hộp, cái)
+    stock: 100, // Số lượng tồn kho (dạng số nguyên)
+    expiryDate: new Date('YYYY-MM-DD'), // Ngày hết hạn, thay YYYY-MM-DD
+    imageUrl: 'https://picsum.photos/400/300', // URL hình ảnh sản phẩm
+    category: 'Danh mục của bạn', // Danh mục sản phẩm
+  },
+
+*/
+
 export let products: Product[] = [
+  // Dán các đối tượng sản phẩm tùy chỉnh của bạn vào đây.
+  // Ví dụ:
+  /*
   {
     id: uuidv4(),
-    name: 'Organic Avocados',
-    description: 'Fresh, creamy Hass avocados, perfect for toast and guacamole. Grown without synthetic pesticides.',
-    price: 2.5,
-    unit: 'piece',
-    stock: 150,
-    expiryDate: new Date('2024-12-28'),
-    imageUrl: 'https://picsum.photos/400/300?random=1',
-    category: 'Fruits & Vegetables',
+    name: 'Cà phê hạt nguyên chất',
+    description: 'Hạt cà phê Arabica rang mộc, hương thơm nồng nàn.',
+    price: 150000,
+    unit: 'túi 500g',
+    stock: 50,
+    expiryDate: new Date('2025-10-20'),
+    imageUrl: 'https://picsum.photos/400/300?random=9',
+    category: 'Đồ uống',
   },
-  {
-    id: uuidv4(),
-    name: 'Sourdough Bread',
-    description: 'Artisanal sourdough loaf with a tangy flavor and chewy crust. Baked fresh daily.',
-    price: 5.99,
-    unit: 'loaf',
-    stock: 40,
-    expiryDate: new Date('2024-11-05'),
-    imageUrl: 'https://picsum.photos/400/300?random=2',
-    category: 'Bakery',
-  },
-  {
-    id: uuidv4(),
-    name: 'Free-Range Eggs',
-    description: 'One dozen large brown eggs from pasture-raised chickens. Rich, flavorful yolks.',
-    price: 4.75,
-    unit: 'dozen',
-    stock: 80,
-    expiryDate: new Date('2024-12-15'),
-    imageUrl: 'https://picsum.photos/400/300?random=3',
-    category: 'Dairy & Eggs',
-  },
-  {
-    id: uuidv4(),
-    name: 'Grass-Fed Ground Beef',
-    description: 'One pound of 90% lean ground beef from grass-fed cattle. Ideal for burgers and sauces.',
-    price: 9.99,
-    unit: 'lb',
-    stock: 65,
-    expiryDate: new Date('2024-11-10'),
-    imageUrl: 'https://picsum.photos/400/300?random=4',
-    category: 'Meat & Seafood',
-  },
-  {
-    id: uuidv4(),
-    name: 'Almond Milk',
-    description: 'Unsweetened almond milk, a great dairy-free alternative. Enriched with calcium and vitamin D.',
-    price: 3.49,
-    unit: 'carton',
-    stock: 120,
-    expiryDate: new Date('2025-02-01'),
-    imageUrl: 'https://picsum.photos/400/300?random=5',
-    category: 'Dairy & Eggs',
-  },
-  {
-    id: uuidv4(),
-    name: 'Organic Blueberries',
-    description: 'Sweet and juicy organic blueberries, packed with antioxidants. Great for smoothies and snacks.',
-    price: 6.20,
-    unit: 'pint',
-    stock: 90,
-    expiryDate: new Date('2024-11-12'),
-    imageUrl: 'https://picsum.photos/400/300?random=6',
-    category: 'Fruits & Vegetables',
-  },
-  {
-    id: uuidv4(),
-    name: 'Cheddar Cheese Block',
-    description: 'A sharp and aged cheddar cheese block, perfect for slicing, grating, or melting.',
-    price: 7.50,
-    unit: 'block',
-    stock: 55,
-    expiryDate: new Date('2025-03-20'),
-    imageUrl: 'https://picsum.photos/400/300?random=7',
-    category: 'Dairy & Eggs',
-  },
-  {
-    id: uuidv4(),
-    name: 'Whole Wheat Pasta',
-    description: 'A healthy and delicious whole wheat pasta, rich in fiber and nutrients. Cooks in 10 minutes.',
-    price: 2.99,
-    unit: 'box',
-    stock: 200,
-    expiryDate: new Date('2025-10-15'),
-    imageUrl: 'https://picsum.photos/400/300?random=8',
-    category: 'Pantry',
-  },
+  */
 ];
