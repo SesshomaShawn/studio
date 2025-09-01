@@ -15,11 +15,9 @@ import {
   query,
   where,
   limit as firestoreLimit,
-  startAt,
   getCountFromServer,
   orderBy,
-  startAfter,
-  endAt
+  startAfter
 } from 'firebase/firestore';
 
 
@@ -43,54 +41,55 @@ export async function getProducts(filters: {
 }): Promise<{ products: Product[]; totalCount: number }> {
     const productsRef = collection(db, "products");
     
-    let constraints = [];
+    let queryConstraints = [];
     if (filters.category && filters.category !== 'all') {
-        constraints.push(where("category", "==", filters.category));
+        queryConstraints.push(where("category", "==", filters.category));
     }
 
     if (filters.query) {
         const queryText = filters.query.toLowerCase();
-        // This is a common pattern for simple "starts-with" search in Firestore.
-        // It requires an index on the 'name' field.
-        constraints.push(orderBy("name"));
-        constraints.push(where("name", ">=", queryText));
-        constraints.push(where("name", "<=", queryText + '\uf8ff'));
+        // Firestore doesn't support case-insensitive "contains" search natively.
+        // This query finds documents where the name starts with the query text.
+        // It requires an index on 'name_lowercase'.
+        queryConstraints.push(orderBy("name"));
+        queryConstraints.push(where("name", ">=", queryText));
+        queryConstraints.push(where("name", "<=", queryText + '\uf8ff'));
     } else {
-        constraints.push(orderBy("name"));
+        // Default sort order if no query is provided.
+        queryConstraints.push(orderBy("name"));
     }
 
-    const countQuery = query(productsRef, ...constraints);
-    const snapshot = await getCountFromServer(countQuery);
-    const totalCount = snapshot.data().count;
+    const countQuery = query(productsRef, ...queryConstraints);
+    const totalCountSnapshot = await getDocs(countQuery);
+    const totalCount = totalCountSnapshot.size;
     
     const page = filters.page || 1;
     const limit = filters.limit || 8;
     
-    let q;
+    let paginatedQuery = countQuery;
 
     if (page > 1) {
-        const first = query(countQuery, firestoreLimit((page - 1) * limit));
-        const documentSnapshots = await getDocs(first);
-        if (documentSnapshots.docs.length > 0) {
-            const lastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
-            q = query(countQuery, startAfter(lastVisible), firestoreLimit(limit));
+        const lastVisibleIndex = (page - 1) * limit -1;
+        if(lastVisibleIndex < totalCountSnapshot.docs.length){
+            const lastVisible = totalCountSnapshot.docs[lastVisibleIndex];
+            paginatedQuery = query(countQuery, startAfter(lastVisible), firestoreLimit(limit));
         } else {
-            // If we are on a page that has no results, return empty.
-             return { products: [], totalCount };
+            // This page is out of bounds
+            paginatedQuery = query(countQuery, firestoreLimit(limit), startAfter(totalCountSnapshot.docs[totalCountSnapshot.docs.length-1]));
         }
     } else {
-        q = query(countQuery, firestoreLimit(limit));
+        paginatedQuery = query(countQuery, firestoreLimit(limit));
     }
     
-    const documentSnapshots = await getDocs(q);
+    const documentSnapshots = await getDocs(paginatedQuery);
 
     let productsData = documentSnapshots.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
         ...data,
-        // Convert Firestore Timestamp to Date
-        expiryDate: data.expiryDate.toDate(),
+        // Convert Firestore Timestamp to Date if it exists
+        expiryDate: data.expiryDate?.toDate ? data.expiryDate.toDate() : new Date(data.expiryDate),
       } as Product;
     });
 
@@ -101,6 +100,9 @@ export async function getProducts(filters: {
 export async function getAllCategories(): Promise<string[]> {
     const productsRef = collection(db, "products");
     const snapshot = await getDocs(productsRef);
+    if(snapshot.empty){
+      return [];
+    }
     const categories = new Set(snapshot.docs.map(doc => doc.data().category as string));
     return Array.from(categories).sort();
 }
