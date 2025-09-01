@@ -48,37 +48,35 @@ export async function getProducts(filters: {
   category?: string;
   page?: number;
   limit?: number;
-}): Promise<{ products: Product[]; totalCount: number }> {
+  lastVisibleId?: string;
+}): Promise<{ products: Product[]; totalCount: number, lastVisibleId?: string }> {
   
   const productsCollection = collection(db, 'products');
-  let q = query(productsCollection, orderBy('name'));
+  let q = query(productsCollection);
 
   if (filters.category && filters.category !== 'all') {
     q = query(q, where('category', '==', filters.category));
   }
     
   if (filters.query) {
-    // Firestore doesn't support native partial string search.
-    // A common workaround is to check if the string starts with the query.
-    // For full-text search, a dedicated search service like Algolia or Typesense is recommended.
     const searchTerm = filters.query.toLowerCase();
     const endTerm = searchTerm + '\uf8ff';
-    q = query(q, where('name', '>=', searchTerm), where('name', '<=', endTerm));
+    q = query(q, where('name_lowercase', '>=', searchTerm), where('name_lowercase', '<=', endTerm), orderBy('name_lowercase'));
+  } else {
+    q = query(q, orderBy('name'));
   }
+
 
   // Get total count for pagination
   const countSnapshot = await getCountFromServer(q);
   const totalCount = countSnapshot.data().count;
 
-  const page = filters.page || 1;
   const pageLimit = filters.limit || 8;
   
-  if (page > 1) {
-    const lastVisibleDocQuery = query(q, limit((page - 1) * pageLimit));
-    const lastVisibleDocSnapshot = await getDocs(lastVisibleDocQuery);
-    const lastVisibleDoc = lastVisibleDocSnapshot.docs[lastVisibleDocSnapshot.docs.length - 1];
-    if(lastVisibleDoc) {
-      q = query(q, startAfter(lastVisibleDoc));
+  if (filters.page && filters.page > 1 && filters.lastVisibleId) {
+    const lastVisibleSnap = await getDoc(doc(db, 'products', filters.lastVisibleId));
+    if (lastVisibleSnap.exists()) {
+      q = query(q, startAfter(lastVisibleSnap));
     }
   }
   
@@ -96,16 +94,11 @@ export async function getProducts(filters: {
     } as Product;
   });
 
-  // Since Firestore's filtering is limited for partial text search, 
-  // we'll do an additional client-side filter if a search query is present.
-  let finalProducts = products;
-  if(filters.query) {
-      finalProducts = products.filter(p => p.name.toLowerCase().includes(filters.query!.toLowerCase()))
-  }
+  const lastVisibleId = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : undefined;
 
-
-  return { products: finalProducts, totalCount };
+  return { products, totalCount, lastVisibleId };
 }
+
 
 export async function getAllCategories(): Promise<string[]> {
   const productsCollection = collection(db, 'products');
@@ -129,6 +122,7 @@ export async function createProduct(values: ProductFormValues) {
     
     await addDoc(collection(db, 'products'), {
         ...productData,
+        name_lowercase: productData.name.toLowerCase(),
         imageUrl: savedImageUrl,
     });
 
@@ -156,6 +150,7 @@ export async function updateProduct(id: string, values: ProductFormValues) {
 
     await updateDoc(docRef, {
         ...productData,
+        name_lowercase: productData.name.toLowerCase(),
         imageUrl: savedImageUrl,
     });
     revalidatePath('/');
