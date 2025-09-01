@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:seed": "tsx scripts/seed-firestore.ts"
+    "db:seed": "tsx scripts/seed-firestore.ts",
+    "test:connection": "tsx scripts/test-connection.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
