@@ -3,7 +3,7 @@
 
 import { db } from '../src/lib/firebase';
 import { initialProducts } from '../src/lib/data';
-import { collection, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, writeBatch, getDocs, doc } from 'firebase/firestore';
 
 async function seedDatabase() {
   console.log('Seeding database...');
@@ -16,13 +16,17 @@ async function seedDatabase() {
     return;
   }
 
+  if (initialProducts.length === 0) {
+    console.log('No initial products to seed. Exiting.');
+    return;
+  }
+
   const batch = writeBatch(db);
 
   initialProducts.forEach((product) => {
-    const docRef = collection(db, 'products'); // Firestore will auto-generate an ID
-    // Note: We don't pass an ID. Firestore will create one.
-    // The product object should not contain an `id` field when creating.
-    batch.set(doc(docRef), product);
+    // Create a new document reference with an auto-generated ID
+    const newProductRef = doc(productsCollection);
+    batch.set(newProductRef, product);
   });
 
   try {
