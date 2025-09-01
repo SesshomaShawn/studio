@@ -36,10 +36,24 @@ export async function getAllCategories(): Promise<string[]> {
   return Array.from(categories).sort();
 }
 
+/**
+ * In a real app, this would save the image to a cloud storage bucket
+ * and return the public URL. For this demo, we'll just return the data URI.
+ */
+export async function saveImage(dataUri: string): Promise<string> {
+    await delay(1500); // Simulate upload time
+    // Here you would typically upload the file to a service like Cloud Storage for Firebase
+    // and get a public URL. For this demo, we'll just return the data URI itself
+    // as our "saved" URL. This is not efficient for a real app but works for prototyping.
+    console.log(`"Saving" image of length ${dataUri.length}`);
+    return dataUri;
+}
+
 export async function createProduct(values: ProductFormValues) {
   const validatedFields = productSchema.safeParse(values);
 
   if (!validatedFields.success) {
+      console.error(validatedFields.error.flatten().fieldErrors);
     return {
       error: "Invalid fields!",
     };

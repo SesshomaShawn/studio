@@ -29,6 +29,7 @@ import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { ImageUpload } from "./image-upload";
 
 type ProductFormProps = {
   product?: Product;
@@ -52,10 +53,28 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
           unit: "",
           stock: 0,
           expiryDate: undefined,
-          imageUrl: "https://picsum.photos/400/300",
+          imageUrl: "",
           category: "",
         },
   });
+  
+  // When the dialog opens, reset the form if needed
+  if(open && !form.formState.isDirty) {
+    form.reset(
+        isEditMode
+      ? { ...product, expiryDate: new Date(product.expiryDate) }
+      : {
+          name: "",
+          description: "",
+          price: 0,
+          unit: "",
+          stock: 0,
+          expiryDate: undefined,
+          imageUrl: "",
+          category: "",
+        },
+    );
+  }
 
   const onSubmit = (values: ProductFormValues) => {
     startTransition(async () => {
@@ -81,7 +100,12 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+        onOpenChange(isOpen);
+        if (!isOpen) {
+            form.reset();
+        }
+    }}>
       <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Edit Product" : "Add New Product"}</DialogTitle>
@@ -91,6 +115,22 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-1 py-4">
+             <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product Image</FormLabel>
+                  <FormControl>
+                     <ImageUpload
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="name"
@@ -207,19 +247,6 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
                   <FormLabel>Category</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Fruits & Vegetables" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/image.png" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

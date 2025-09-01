@@ -21,7 +21,8 @@ export const productSchema = z.object({
   expiryDate: z.date({
     required_error: "An expiry date is required.",
   }),
-  imageUrl: z.string().url({ message: "Please enter a valid image URL." }),
+  // Allow any string for imageUrl, as it can be a URL or a data URI
+  imageUrl: z.string().min(1, { message: "Image is required." }),
   category: z.string().min(2, { message: "Category must be at least 2 characters." }),
 });
 
