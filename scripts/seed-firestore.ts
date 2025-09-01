@@ -1,3 +1,4 @@
+
 // scripts/seed-firestore.ts
 import { db } from '../src/lib/firebase';
 import { products as initialProducts } from '../src/lib/data';
@@ -5,9 +6,7 @@ import { collection, writeBatch, doc } from 'firebase/firestore';
 
 async function seedDatabase() {
   console.log('Starting to seed the database...');
-  const productsCollectionRef = collection(db, 'products');
   
-  // First, let's make sure the local data is what we expect
   if (!initialProducts || initialProducts.length === 0) {
     console.log("No initial products found in src/lib/data.ts. Aborting seed.");
     return;
@@ -16,14 +15,16 @@ async function seedDatabase() {
   const batch = writeBatch(db);
 
   initialProducts.forEach((product) => {
-    // For batch writes, you should create a document reference first if you want an auto-generated ID
-    const docRef = doc(collection(db, 'products'));
+    // When using a batch write with auto-generated IDs, you must first create a document reference with no path arguments.
+    const docRef = doc(collection(db, 'products')); 
+    
     // The original product's `id` field from the local array is not needed, Firestore will generate one.
     const { id, ...productData } = product; 
     
+    // Ensure names are lowercase for case-insensitive querying
     const dataToSave = {
       ...productData,
-      name: productData.name.toLowerCase() // Also ensure names are lowercase for consistency
+      name: productData.name.toLowerCase() 
     };
 
     batch.set(docRef, dataToSave);
@@ -39,4 +40,6 @@ async function seedDatabase() {
 
 seedDatabase().then(() => {
   console.log('Database seeding process finished.');
+  // In a script, you might want to explicitly exit the process
+  // process.exit(0);
 });
