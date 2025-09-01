@@ -17,7 +17,8 @@ import {
   limit as firestoreLimit,
   getCountFromServer,
   orderBy,
-  startAfter
+  startAfter,
+  getDoc
 } from 'firebase/firestore';
 
 
@@ -38,7 +39,8 @@ export async function getProducts(filters: {
   category?: string;
   page?: number;
   limit?: number;
-}): Promise<{ products: Product[]; totalCount: number }> {
+  lastVisibleId?: string;
+}): Promise<{ products: Product[]; totalCount: number; }> {
     const productsRef = collection(db, "products");
     
     let queryConstraints = [];
@@ -48,37 +50,36 @@ export async function getProducts(filters: {
 
     if (filters.query) {
         const queryText = filters.query.toLowerCase();
-        // Firestore doesn't support case-insensitive "contains" search natively.
-        // This query finds documents where the name starts with the query text.
-        // It requires an index on 'name_lowercase'.
-        queryConstraints.push(orderBy("name"));
         queryConstraints.push(where("name", ">=", queryText));
         queryConstraints.push(where("name", "<=", queryText + '\uf8ff'));
-    } else {
-        // Default sort order if no query is provided.
-        queryConstraints.push(orderBy("name"));
     }
-
-    const countQuery = query(productsRef, ...queryConstraints);
-    const totalCountSnapshot = await getDocs(countQuery);
-    const totalCount = totalCountSnapshot.size;
     
+    // Always sort by name to have a consistent order
+    queryConstraints.push(orderBy("name"));
+
+    // Build the query to get the total count
+    const countQuery = query(productsRef, ...queryConstraints);
+    const totalCountSnapshot = await getCountFromServer(countQuery);
+    const totalCount = totalCountSnapshot.data().count;
+    
+    // Now, build the paginated query
     const page = filters.page || 1;
     const limit = filters.limit || 8;
     
-    let paginatedQuery = countQuery;
+    let paginatedQuery = query(countQuery, firestoreLimit(limit));
 
     if (page > 1) {
-        const lastVisibleIndex = (page - 1) * limit -1;
-        if(lastVisibleIndex < totalCountSnapshot.docs.length){
-            const lastVisible = totalCountSnapshot.docs[lastVisibleIndex];
+        // To paginate, we need to get the document snapshot of the last item from the *previous* page.
+        // A more robust way to do this without fetching all previous docs is to pass the last visible doc ID.
+        // However, for simplicity and given the current structure, we'll fetch the necessary documents
+        // to find the correct cursor. A production app might pass the last doc snapshot from the client.
+        const docsToSkip = (page - 1) * limit;
+        const cursorQuery = query(countQuery, firestoreLimit(docsToSkip));
+        const cursorSnapshot = await getDocs(cursorQuery);
+        if (cursorSnapshot.docs.length > 0) {
+            const lastVisible = cursorSnapshot.docs[cursorSnapshot.docs.length - 1];
             paginatedQuery = query(countQuery, startAfter(lastVisible), firestoreLimit(limit));
-        } else {
-            // This page is out of bounds
-            paginatedQuery = query(countQuery, firestoreLimit(limit), startAfter(totalCountSnapshot.docs[totalCountSnapshot.docs.length-1]));
         }
-    } else {
-        paginatedQuery = query(countQuery, firestoreLimit(limit));
     }
     
     const documentSnapshots = await getDocs(paginatedQuery);
