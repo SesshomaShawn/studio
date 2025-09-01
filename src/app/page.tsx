@@ -5,11 +5,14 @@ import { ProductCard } from "@/components/product-card";
 import { getAllCategories, getProducts } from "@/lib/actions";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationControls } from "@/components/pagination-controls";
 
 type HomeProps = {
   searchParams?: {
     query?: string;
     category?: string;
+    page?: string;
+    limit?: string;
   };
 };
 
@@ -29,8 +32,8 @@ function ProductGridSkeleton() {
   );
 }
 
-async function ProductGrid({ query, category }: { query?: string; category?: string; }) {
-  const products = await getProducts({ query, category });
+async function ProductGrid({ query, category, page, limit }: { query?: string; category?: string; page?: number, limit?: number }) {
+  const { products, totalCount } = await getProducts({ query, category, page, limit });
 
   if (products.length === 0) {
     return (
@@ -44,18 +47,29 @@ async function ProductGrid({ query, category }: { query?: string; category?: str
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
+    <>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+       <PaginationControls
+          itemCount={totalCount}
+          currentPage={page || 1}
+          itemsPerPage={limit || 8}
+        />
+    </>
   );
 }
 
 export default async function Home({ searchParams }: HomeProps) {
   const query = searchParams?.query;
   const category = searchParams?.category;
+  const page = Number(searchParams?.page) || 1;
+  const limit = Number(searchParams?.limit) || 8;
   const categories = await getAllCategories();
+
+  const suspenseKey = `${query}-${category}-${page}-${limit}`;
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -76,10 +90,12 @@ export default async function Home({ searchParams }: HomeProps) {
              <ProductFilters categories={categories} />
           </div>
         </div>
-
-        <Suspense key={query + category} fallback={<ProductGridSkeleton />}>
-          <ProductGrid query={query} category={category} />
-        </Suspense>
+        
+        <div className="flex flex-col gap-6">
+          <Suspense key={suspenseKey} fallback={<ProductGridSkeleton />}>
+            <ProductGrid query={query} category={category} page={page} limit={limit} />
+          </Suspense>
+        </div>
       </main>
     </div>
   );
