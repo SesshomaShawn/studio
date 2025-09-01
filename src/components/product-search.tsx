@@ -88,45 +88,48 @@ export function ProductSearch({ placeholder }: { placeholder: string }) {
       <form onSubmit={handleSubmit} className="relative">
         <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
           <PopoverTrigger asChild>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          </PopoverTrigger>
-          <Input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => {
-              if (suggestions.length > 0) setPopoverOpen(true);
-            }}
-            placeholder={placeholder}
-            className="pl-10 w-full"
-            aria-label="Search products"
-          />
-        </Popover>
-
-        {isPending || isLoadingSuggestions ? (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-        ) : null}
-      </form>
-      {isPopoverOpen && suggestions.length > 0 && (
-         <PopoverContent 
-            className="w-[--radix-popover-trigger-width] p-0" 
-            onOpenAutoFocus={(e) => e.preventDefault()}
-            align="start"
-          >
-            <div className="flex flex-col gap-1 p-2">
-              {suggestions.map((s, i) => (
-                <Button
-                  key={i}
-                  variant="ghost"
-                  className="justify-start"
-                  onClick={() => handleSuggestionClick(s)}
-                >
-                  {s}
-                </Button>
-              ))}
+            <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    ref={inputRef}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => {
+                    if (suggestions.length > 0) setPopoverOpen(true);
+                    }}
+                    placeholder={placeholder}
+                    className="pl-10 w-full"
+                    aria-label="Search products"
+                />
             </div>
-          </PopoverContent>
-      )}
+          </PopoverTrigger>
+          
+          {isPending || isLoadingSuggestions ? (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+          ) : null}
+
+          {suggestions.length > 0 && (
+            <PopoverContent 
+                className="w-[--radix-popover-trigger-width] p-0" 
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                align="start"
+            >
+                <div className="flex flex-col gap-1 p-2">
+                {suggestions.map((s, i) => (
+                    <Button
+                    key={i}
+                    variant="ghost"
+                    className="justify-start"
+                    onClick={() => handleSuggestionClick(s)}
+                    >
+                    {s}
+                    </Button>
+                ))}
+                </div>
+            </PopoverContent>
+          )}
+        </Popover>
+      </form>
     </div>
   );
 }
