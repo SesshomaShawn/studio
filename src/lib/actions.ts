@@ -18,7 +18,8 @@ import {
   startAt,
   getCountFromServer,
   orderBy,
-  startAfter
+  startAfter,
+  endAt
 } from 'firebase/firestore';
 
 
@@ -41,17 +42,21 @@ export async function getProducts(filters: {
   limit?: number;
 }): Promise<{ products: Product[]; totalCount: number }> {
     const productsRef = collection(db, "products");
-    let q = query(productsRef, orderBy("name"));
     
     let constraints = [];
     if (filters.category && filters.category !== 'all') {
         constraints.push(where("category", "==", filters.category));
     }
-    
+
     if (filters.query) {
-        // Firestore doesn't support partial string matching natively.
-        // For a real app, use a search service like Algolia or Elasticsearch.
-        // For this demo, we'll filter after fetching, which is inefficient.
+        const queryText = filters.query.toLowerCase();
+        // This is a common pattern for simple "starts-with" search in Firestore.
+        // It requires an index on the 'name' field.
+        constraints.push(orderBy("name"));
+        constraints.push(where("name", ">=", queryText));
+        constraints.push(where("name", "<=", queryText + '\uf8ff'));
+    } else {
+        constraints.push(orderBy("name"));
     }
 
     const countQuery = query(productsRef, ...constraints);
@@ -61,13 +66,20 @@ export async function getProducts(filters: {
     const page = filters.page || 1;
     const limit = filters.limit || 8;
     
+    let q;
+
     if (page > 1) {
-        const first = query(productsRef, ...constraints, orderBy("name"), firestoreLimit((page - 1) * limit));
+        const first = query(countQuery, firestoreLimit((page - 1) * limit));
         const documentSnapshots = await getDocs(first);
-        const lastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
-        q = query(productsRef, ...constraints, orderBy("name"), startAfter(lastVisible), firestoreLimit(limit));
+        if (documentSnapshots.docs.length > 0) {
+            const lastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
+            q = query(countQuery, startAfter(lastVisible), firestoreLimit(limit));
+        } else {
+            // If we are on a page that has no results, return empty.
+             return { products: [], totalCount };
+        }
     } else {
-        q = query(productsRef, ...constraints, orderBy("name"), firestoreLimit(limit));
+        q = query(countQuery, firestoreLimit(limit));
     }
     
     const documentSnapshots = await getDocs(q);
@@ -81,11 +93,6 @@ export async function getProducts(filters: {
         expiryDate: data.expiryDate.toDate(),
       } as Product;
     });
-
-     if (filters.query) {
-        const lowerCaseQuery = filters.query.toLowerCase();
-        productsData = productsData.filter(p => p.name.toLowerCase().includes(lowerCaseQuery));
-    }
 
     return { products: productsData, totalCount };
 }
@@ -108,9 +115,14 @@ export async function createProduct(values: ProductFormValues) {
       error: 'Invalid fields!',
     };
   }
+  
+  const dataToSave = {
+      ...validatedFields.data,
+      name: validatedFields.data.name.toLowerCase() // Store name in lowercase for case-insensitive search
+  };
 
   try {
-    await addDoc(collection(db, "products"), validatedFields.data);
+    await addDoc(collection(db, "products"), dataToSave);
     revalidatePath('/');
     return { success: 'Product created successfully!' };
   } catch (e) {
@@ -129,9 +141,15 @@ export async function updateProduct(id: string, values: ProductFormValues) {
   }
 
   const productRef = doc(db, "products", id);
+  
+   const dataToSave = {
+      ...validatedFields.data,
+      name: validatedFields.data.name.toLowerCase() // Store name in lowercase
+  };
+
 
   try {
-    await updateDoc(productRef, validatedFields.data);
+    await updateDoc(productRef, dataToSave);
     revalidatePath('/');
     return { success: 'Product updated successfully!' };
   } catch (e) {
