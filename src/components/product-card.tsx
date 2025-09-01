@@ -16,7 +16,9 @@ import type { Product } from "@/lib/types";
 import { format } from "date-fns";
 import { ProductForm } from "./product-form";
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
-import { Calendar, DollarSign, Package, Pencil, Trash2 } from "lucide-react";
+import { Calendar, DollarSign, Package, Pencil, ShoppingCart, Trash2 } from "lucide-react";
+import { useCart } from "@/context/cart-context";
+import { useToast } from "@/hooks/use-toast";
 
 type ProductCardProps = {
   product: Product;
@@ -25,9 +27,19 @@ type ProductCardProps = {
 export function ProductCard({ product }: ProductCardProps) {
   const [isEditFormOpen, setEditFormOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   const isExpired = new Date(product.expiryDate) < new Date();
   const isLowStock = product.stock < 20;
+
+  const handleAddToCart = () => {
+    addToCart(product);
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
 
   return (
     <>
@@ -42,6 +54,10 @@ export function ProductCard({ product }: ProductCardProps) {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               data-ai-hint={`${product.category} product`}
             />
+             <Button size="sm" className="absolute bottom-2 right-2" onClick={handleAddToCart} disabled={product.stock === 0}>
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Add to Cart
+            </Button>
           </div>
           <div className="p-6 pb-2">
             <Badge variant="outline" className="mb-2">{product.category}</Badge>
@@ -61,7 +77,11 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-center gap-2">
               <Package className="h-4 w-4 text-primary" />
               <span>{product.stock} items in stock</span>
-              {isLowStock && <Badge variant="destructive">Low Stock</Badge>}
+              {product.stock === 0 ? (
+                <Badge variant="destructive">Out of Stock</Badge>
+              ) : isLowStock ? (
+                <Badge variant="destructive">Low Stock</Badge>
+              ) : null}
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { ProductForm } from "./product-form";
 import { PlusCircle } from "lucide-react";
+import { CartDrawer } from "./cart-drawer";
 
 export function AppHeader() {
   const [isCreateFormOpen, setCreateFormOpen] = useState(false);
@@ -18,10 +19,13 @@ export function AppHeader() {
             <span className="font-bold text-lg hidden sm:inline-block">Product Price Lookup</span>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-4">
-            <Button onClick={() => setCreateFormOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
+            <nav className="flex items-center space-x-2">
+              <CartDrawer />
+              <Button onClick={() => setCreateFormOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Product
+              </Button>
+            </nav>
           </div>
         </div>
       </header>
