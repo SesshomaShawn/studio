@@ -12,11 +12,12 @@ async function seedDatabase() {
     return;
   }
   
+  const productsCollectionRef = collection(db, 'products');
   const batch = writeBatch(db);
 
   initialProducts.forEach((product) => {
     // When using a batch write with auto-generated IDs, you must first create a document reference with no path arguments.
-    const docRef = doc(collection(db, 'products')); 
+    const docRef = doc(productsCollectionRef); 
     
     // The original product's `id` field from the local array is not needed, Firestore will generate one.
     const { id, ...productData } = product; 
@@ -24,7 +25,9 @@ async function seedDatabase() {
     // Ensure names are lowercase for case-insensitive querying
     const dataToSave = {
       ...productData,
-      name: productData.name.toLowerCase() 
+      name: productData.name.toLowerCase(),
+      // Ensure expiryDate is a format Firestore understands (like a Date object)
+      expiryDate: new Date(productData.expiryDate),
     };
 
     batch.set(docRef, dataToSave);
@@ -40,6 +43,4 @@ async function seedDatabase() {
 
 seedDatabase().then(() => {
   console.log('Database seeding process finished.');
-  // In a script, you might want to explicitly exit the process
-  // process.exit(0);
 });
