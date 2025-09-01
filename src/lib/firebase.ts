@@ -5,12 +5,13 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 // IMPORTANT: Replace this with your actual Firebase config object
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  "projectId": "product-price-lookup",
+  "appId": "1:145439781442:web:10178f758411b1aed3f3db",
+  "storageBucket": "product-price-lookup.firebasestorage.app",
+  "apiKey": "AIzaSyBi02fUm00lGddN1NeWpxrUQQBtjMH51vI",
+  "authDomain": "product-price-lookup.firebaseapp.com",
+  "measurementId": "",
+  "messagingSenderId": "145439781442"
 };
 
 // Initialize Firebase
