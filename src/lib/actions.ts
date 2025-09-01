@@ -2,24 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Product, ProductFormValues } from './types';
+import { products as initialProducts } from './data';
 import { v4 as uuidv4 } from 'uuid';
 import { productSchema } from './types';
-import { db } from './firebase';
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc,
-  query,
-  where,
-  limit as firestoreLimit,
-  getCountFromServer,
-  orderBy,
-  startAfter,
-  getDoc
-} from 'firebase/firestore';
+
+
+// In a real app, this would be a database.
+let products: Product[] = [...initialProducts];
 
 
 // In a real app, this would save the image to a cloud storage bucket
@@ -34,77 +23,41 @@ export async function saveImage(dataUri: string): Promise<string> {
   return dataUri;
 }
 
+
 export async function getProducts(filters: {
   query?: string;
   category?: string;
   page?: number;
   limit?: number;
-  lastVisibleId?: string;
 }): Promise<{ products: Product[]; totalCount: number; }> {
-    const productsRef = collection(db, "products");
-    
-    let queryConstraints = [];
-    if (filters.category && filters.category !== 'all') {
-        queryConstraints.push(where("category", "==", filters.category));
-    }
+  let filteredProducts = [...products];
 
-    if (filters.query) {
-        const queryText = filters.query.toLowerCase();
-        queryConstraints.push(where("name", ">=", queryText));
-        queryConstraints.push(where("name", "<=", queryText + '\uf8ff'));
-    }
-    
-    // Always sort by name to have a consistent order
-    queryConstraints.push(orderBy("name"));
+  if (filters.query) {
+    const query = filters.query.toLowerCase();
+    filteredProducts = filteredProducts.filter(p => p.name.toLowerCase().includes(query));
+  }
 
-    // Build the query to get the total count
-    const countQuery = query(productsRef, ...queryConstraints);
-    const totalCountSnapshot = await getCountFromServer(countQuery);
-    const totalCount = totalCountSnapshot.data().count;
-    
-    // Now, build the paginated query
-    const page = filters.page || 1;
-    const limit = filters.limit || 8;
-    
-    let paginatedQuery = query(countQuery, firestoreLimit(limit));
+  if (filters.category && filters.category !== 'all') {
+    filteredProducts = filteredProducts.filter(p => p.category === filters.category);
+  }
+  
+  const totalCount = filteredProducts.length;
 
-    if (page > 1) {
-        // To paginate, we need to get the document snapshot of the last item from the *previous* page.
-        // A more robust way to do this without fetching all previous docs is to pass the last visible doc ID.
-        // However, for simplicity and given the current structure, we'll fetch the necessary documents
-        // to find the correct cursor. A production app might pass the last doc snapshot from the client.
-        const docsToSkip = (page - 1) * limit;
-        const cursorQuery = query(countQuery, firestoreLimit(docsToSkip));
-        const cursorSnapshot = await getDocs(cursorQuery);
-        if (cursorSnapshot.docs.length > 0) {
-            const lastVisible = cursorSnapshot.docs[cursorSnapshot.docs.length - 1];
-            paginatedQuery = query(countQuery, startAfter(lastVisible), firestoreLimit(limit));
-        }
-    }
-    
-    const documentSnapshots = await getDocs(paginatedQuery);
+  const page = filters.page || 1;
+  const limit = filters.limit || 8;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
 
-    let productsData = documentSnapshots.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        // Convert Firestore Timestamp to Date if it exists
-        expiryDate: data.expiryDate?.toDate ? data.expiryDate.toDate() : new Date(data.expiryDate),
-      } as Product;
-    });
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-    return { products: productsData, totalCount };
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  return { products: paginatedProducts, totalCount };
 }
 
-
 export async function getAllCategories(): Promise<string[]> {
-    const productsRef = collection(db, "products");
-    const snapshot = await getDocs(productsRef);
-    if(snapshot.empty){
-      return [];
-    }
-    const categories = new Set(snapshot.docs.map(doc => doc.data().category as string));
+    const categories = new Set(products.map(p => p.category));
     return Array.from(categories).sort();
 }
 
@@ -113,25 +66,19 @@ export async function createProduct(values: ProductFormValues) {
   const validatedFields = productSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    console.error(validatedFields.error.flatten().fieldErrors);
     return {
       error: 'Invalid fields!',
     };
   }
-  
-  const dataToSave = {
-      ...validatedFields.data,
-      name: validatedFields.data.name.toLowerCase() // Store name in lowercase for case-insensitive search
+
+  const newProduct: Product = {
+    id: uuidv4(),
+    ...validatedFields.data,
   };
 
-  try {
-    await addDoc(collection(db, "products"), dataToSave);
-    revalidatePath('/');
-    return { success: 'Product created successfully!' };
-  } catch (e) {
-    console.error("Error adding document: ", e);
-    return { error: 'Failed to create product.' };
-  }
+  products.unshift(newProduct);
+  revalidatePath('/');
+  return { success: 'Product created successfully!' };
 }
 
 export async function updateProduct(id: string, values: ProductFormValues) {
@@ -143,31 +90,23 @@ export async function updateProduct(id: string, values: ProductFormValues) {
     };
   }
 
-  const productRef = doc(db, "products", id);
-  
-   const dataToSave = {
-      ...validatedFields.data,
-      name: validatedFields.data.name.toLowerCase() // Store name in lowercase
-  };
-
-
-  try {
-    await updateDoc(productRef, dataToSave);
-    revalidatePath('/');
-    return { success: 'Product updated successfully!' };
-  } catch (e) {
-    console.error("Error updating document: ", e);
-    return { error: 'Failed to update product.' };
+  const index = products.findIndex(p => p.id === id);
+  if (index === -1) {
+    return { error: 'Product not found!' };
   }
+
+  products[index] = { ...products[index], ...validatedFields.data };
+  revalidatePath('/');
+  return { success: 'Product updated successfully!' };
 }
 
 export async function deleteProduct(id: string) {
-  try {
-    await deleteDoc(doc(db, "products", id));
-    revalidatePath('/');
-    return { success: 'Product deleted successfully!' };
-  } catch (e) {
-    console.error("Error deleting document: ", e);
-    return { error: 'Failed to delete product.' };
+  const index = products.findIndex(p => p.id === id);
+  if (index === -1) {
+    return { error: 'Product not found!' };
   }
+  
+  products.splice(index, 1);
+  revalidatePath('/');
+  return { success: 'Product deleted successfully!' };
 }
