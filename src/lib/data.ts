@@ -7,14 +7,14 @@ import { v4 as uuidv4 } from 'uuid';
 //
 // ĐỂ THÊM DỮ LIỆU CỦA RIÊNG BẠN:
 // 1. Sao chép khối đối tượng sản phẩm mẫu bên dưới.
-// 2. Dán nó vào trong dấu ngoặc vuông `[]` của mảng `products`.
+// 2. Dán nó vào trong dấu ngoặc vuông `[]` của mảng `initialProducts`.
 // 3. Thay đổi các giá trị (ví dụ: "Tên sản phẩm của bạn") thành thông tin chi tiết về sản phẩm của bạn.
 // 4. Thêm bao nhiêu đối tượng sản phẩm tùy thích, phân cách mỗi đối tượng bằng dấu phẩy.
 /*
  * Mẫu đối tượng sản phẩm để sao chép:
  *
   {
-    id: uuidv4(), // Bỏ qua trường này, Firestore sẽ tự tạo ID
+    // Firestore sẽ tự động tạo ID, bạn không cần cung cấp trường này.
     name: 'Tên sản phẩm của bạn',
     description: 'Mô tả chi tiết về sản phẩm của bạn.',
     price: 19.99, // Giá sản phẩm (dạng số)
