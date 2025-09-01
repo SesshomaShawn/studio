@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -58,23 +58,25 @@ export function ProductForm({ product, open, onOpenChange }: ProductFormProps) {
         },
   });
   
-  // When the dialog opens, reset the form if needed
-  if(open && !form.formState.isDirty) {
-    form.reset(
-        isEditMode
-      ? { ...product, expiryDate: new Date(product.expiryDate) }
-      : {
-          name: "",
-          description: "",
-          price: 0,
-          unit: "",
-          stock: 0,
-          expiryDate: undefined,
-          imageUrl: "",
-          category: "",
-        },
-    );
-  }
+  useEffect(() => {
+    if (open) {
+      form.reset(
+          isEditMode
+        ? { ...product, expiryDate: new Date(product.expiryDate) }
+        : {
+            name: "",
+            description: "",
+            price: 0,
+            unit: "",
+            stock: 0,
+            expiryDate: undefined,
+            imageUrl: "",
+            category: "",
+          },
+      );
+    }
+  }, [open, isEditMode, product, form]);
+
 
   const onSubmit = (values: ProductFormValues) => {
     startTransition(async () => {
