@@ -6,13 +6,15 @@ import { getAllCategories, getProducts } from "@/lib/actions";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/pagination-controls";
+import { Product } from "@/lib/types";
 
 type HomeProps = {
   searchParams?: {
     query?: string;
     category?: string;
-    page?: string;
+    page?: string; // Still useful for client-side state
     limit?: string;
+    lastVisibleId?: string; // For Firestore pagination
   };
 };
 
@@ -32,8 +34,8 @@ function ProductGridSkeleton() {
   );
 }
 
-async function ProductGrid({ query, category, page, limit }: { query?: string; category?: string; page?: number, limit?: number }) {
-  const { products, totalCount } = await getProducts({ query, category, page, limit });
+async function ProductGrid({ query, category, page, limit, lastVisibleId }: { query?: string; category?: string; page?: number, limit?: number, lastVisibleId?: string }) {
+  const { products, totalCount, lastVisibleId: newLastVisibleId } = await getProducts({ query, category, page, limit, lastVisibleId });
 
   if (products.length === 0) {
     return (
@@ -49,7 +51,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {products.map((product) => (
+        {products.map((product: Product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
@@ -57,6 +59,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
           itemCount={totalCount}
           currentPage={page || 1}
           itemsPerPage={limit || 8}
+          lastVisibleId={newLastVisibleId}
         />
     </>
   );
@@ -67,9 +70,10 @@ export default async function Home({ searchParams }: HomeProps) {
   const category = searchParams?.category;
   const page = Number(searchParams?.page) || 1;
   const limit = Number(searchParams?.limit) || 8;
+  const lastVisibleId = searchParams?.lastVisibleId;
   const categories = await getAllCategories();
 
-  const suspenseKey = `${query}-${category}-${page}-${limit}`;
+  const suspenseKey = `${query}-${category}-${page}-${limit}-${lastVisibleId}`;
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -93,7 +97,7 @@ export default async function Home({ searchParams }: HomeProps) {
         
         <div className="flex flex-col gap-6">
           <Suspense key={suspenseKey} fallback={<ProductGridSkeleton />}>
-            <ProductGrid query={query} category={category} page={page} limit={limit} />
+            <ProductGrid query={query} category={category} page={page} limit={limit} lastVisibleId={lastVisibleId}/>
           </Suspense>
         </div>
       </main>

@@ -1,25 +1,46 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  limit,
+  startAfter,
+  getDoc,
+  getCountFromServer,
+  orderBy,
+} from 'firebase/firestore';
+import { getDownloadURL, ref, uploadString, deleteObject } from "firebase/storage";
+import { db, storage } from './firebase';
 import type { Product, ProductFormValues } from './types';
 import { productSchema } from './types';
-import { initialProducts as allProducts } from './data';
-import { v4 as uuidv4 } from 'uuid';
-
-// In a real app, you'd be interacting with a database.
-// For this demo, we're using a simple in-memory array.
-let products: Product[] = allProducts.map(p => ({ ...p, id: uuidv4() }));
 
 // In a real app, this would save the image to a cloud storage bucket
-// and return the public URL. For this demo, we'll just return the data URI.
+// and return the public URL.
 export async function saveImage(dataUri: string): Promise<string> {
-  // Simulate upload time
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  // Here you would typically upload the file to a service like Cloud Storage for Firebase
-  // and get a public URL. For this demo, we'll just return the data URI itself
-  // as our "saved" URL. This is not efficient for a real app but works for prototyping.
-  console.log(`"Saving" image of length ${dataUri.length}`);
-  return dataUri;
+    if (!dataUri.startsWith('data:image')) {
+        // If it's not a new data URI, assume it's an existing URL and return it.
+        return dataUri;
+    }
+    const blobType = dataUri.substring(dataUri.indexOf(':') + 1, dataUri.indexOf(';'));
+    const fileExtension = blobType.split('/')[1];
+    const storageRef = ref(storage, `products/${Date.now()}.${fileExtension}`);
+    
+    // We need to remove the metadata from the data URI before uploading.
+    const base64Data = dataUri.split(',')[1];
+
+    await uploadString(storageRef, base64Data, 'base64', {
+        contentType: blobType,
+    });
+    
+    const downloadUrl = await getDownloadURL(storageRef);
+    return downloadUrl;
 }
 
 export async function getProducts(filters: {
@@ -28,33 +49,68 @@ export async function getProducts(filters: {
   page?: number;
   limit?: number;
 }): Promise<{ products: Product[]; totalCount: number }> {
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-
-  let filteredProducts = products;
-
-  if (filters.query) {
-    const searchTerm = filters.query.toLowerCase();
-    filteredProducts = filteredProducts.filter(p => p.name.toLowerCase().includes(searchTerm));
-  }
+  
+  const productsCollection = collection(db, 'products');
+  let q = query(productsCollection, orderBy('name'));
 
   if (filters.category && filters.category !== 'all') {
-    filteredProducts = filteredProducts.filter(p => p.category === filters.category);
+    q = query(q, where('category', '==', filters.category));
+  }
+    
+  if (filters.query) {
+    // Firestore doesn't support native partial string search.
+    // A common workaround is to check if the string starts with the query.
+    // For full-text search, a dedicated search service like Algolia or Typesense is recommended.
+    const searchTerm = filters.query.toLowerCase();
+    const endTerm = searchTerm + '\uf8ff';
+    q = query(q, where('name', '>=', searchTerm), where('name', '<=', endTerm));
   }
 
-  const totalCount = filteredProducts.length;
+  // Get total count for pagination
+  const countSnapshot = await getCountFromServer(q);
+  const totalCount = countSnapshot.data().count;
+
   const page = filters.page || 1;
-  const limit = filters.limit || 8;
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
+  const pageLimit = filters.limit || 8;
+  
+  if (page > 1) {
+    const lastVisibleDocQuery = query(q, limit((page - 1) * pageLimit));
+    const lastVisibleDocSnapshot = await getDocs(lastVisibleDocQuery);
+    const lastVisibleDoc = lastVisibleDocSnapshot.docs[lastVisibleDocSnapshot.docs.length - 1];
+    if(lastVisibleDoc) {
+      q = query(q, startAfter(lastVisibleDoc));
+    }
+  }
+  
+  q = query(q, limit(pageLimit));
+  
+  const snapshot = await getDocs(q);
 
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+  const products: Product[] = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      // Convert Firestore Timestamp to Date
+      expiryDate: data.expiryDate.toDate(),
+    } as Product;
+  });
 
-  return { products: paginatedProducts, totalCount };
+  // Since Firestore's filtering is limited for partial text search, 
+  // we'll do an additional client-side filter if a search query is present.
+  let finalProducts = products;
+  if(filters.query) {
+      finalProducts = products.filter(p => p.name.toLowerCase().includes(filters.query!.toLowerCase()))
+  }
+
+
+  return { products: finalProducts, totalCount };
 }
 
 export async function getAllCategories(): Promise<string[]> {
-  await new Promise(resolve => setTimeout(resolve, 200)); // Simulate network delay
-  const categories = new Set(products.map(p => p.category));
+  const productsCollection = collection(db, 'products');
+  const snapshot = await getDocs(productsCollection);
+  const categories = new Set(snapshot.docs.map(doc => doc.data().category as string));
   return Array.from(categories).sort();
 }
 
@@ -66,15 +122,22 @@ export async function createProduct(values: ProductFormValues) {
       error: 'Invalid fields!',
     };
   }
+  
+  try {
+     const { imageUrl, ...productData } = validatedFields.data;
+     const savedImageUrl = await saveImage(imageUrl);
+    
+    await addDoc(collection(db, 'products'), {
+        ...productData,
+        imageUrl: savedImageUrl,
+    });
 
-  const newProduct: Product = {
-    id: uuidv4(),
-    ...validatedFields.data,
-  };
-
-  products.unshift(newProduct); // Add to the beginning of the array
-  revalidatePath('/');
-  return { success: 'Product created successfully!' };
+    revalidatePath('/');
+    return { success: 'Product created successfully!' };
+  } catch (e) {
+    console.error("Error adding document: ", e);
+    return { error: "Failed to create product." };
+  }
 }
 
 export async function updateProduct(id: string, values: ProductFormValues) {
@@ -85,28 +148,40 @@ export async function updateProduct(id: string, values: ProductFormValues) {
       error: 'Invalid fields!',
     };
   }
+  
+  const docRef = doc(db, 'products', id);
+  try {
+    const { imageUrl, ...productData } = validatedFields.data;
+    const savedImageUrl = await saveImage(imageUrl);
 
-  const index = products.findIndex(p => p.id === id);
-  if (index === -1) {
-    return { error: 'Product not found!' };
+    await updateDoc(docRef, {
+        ...productData,
+        imageUrl: savedImageUrl,
+    });
+    revalidatePath('/');
+    return { success: 'Product updated successfully!' };
+  } catch (e) {
+     console.error("Error updating document: ", e);
+    return { error: "Failed to update product." };
   }
-
-  products[index] = {
-    ...products[index],
-    ...validatedFields.data,
-  };
-
-  revalidatePath('/');
-  return { success: 'Product updated successfully!' };
 }
 
 export async function deleteProduct(id: string) {
-  const index = products.findIndex(p => p.id === id);
-  if (index === -1) {
-    return { error: 'Product not found!' };
+  const docRef = doc(db, 'products', id);
+   try {
+    const docSnap = await getDoc(docRef);
+    if(docSnap.exists()){
+      const imageUrl = docSnap.data().imageUrl;
+      if(imageUrl && imageUrl.includes('firebasestorage')){
+         const imageRef = ref(storage, imageUrl);
+         await deleteObject(imageRef).catch(e => console.error("Error deleting image from storage:", e));
+      }
+    }
+    await deleteDoc(docRef);
+    revalidatePath('/');
+    return { success: 'Product deleted successfully!' };
+  } catch(e) {
+    console.error("Error deleting document: ", e);
+    return { error: "Failed to delete product." };
   }
-
-  products.splice(index, 1);
-  revalidatePath('/');
-  return { success: 'Product deleted successfully!' };
 }

@@ -23,6 +23,7 @@ type PaginationControlsProps = {
   itemCount: number;
   itemsPerPage: number;
   currentPage: number;
+  lastVisibleId?: string;
 };
 
 const getPaginationRange = (totalPages: number, currentPage: number, siblingCount = 1) => {
@@ -66,6 +67,7 @@ export function PaginationControls({
   itemCount,
   itemsPerPage,
   currentPage,
+  lastVisibleId,
 }: PaginationControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -73,9 +75,20 @@ export function PaginationControls({
 
   const totalPages = Math.ceil(itemCount / itemsPerPage);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number, direction?: 'prev' | 'next') => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
+
+    // For Firestore pagination, we only really need `lastVisibleId` for the 'next' page
+    if (direction === 'next' && lastVisibleId) {
+       params.set('lastVisibleId', lastVisibleId);
+    } else {
+       // We remove it when going back or to a specific page number
+       // as Firestore's `startAfter` requires a document snapshot.
+       // A simpler approach for now is to refetch from the start of that page.
+       params.delete('lastVisibleId');
+    }
+    
     router.replace(`${pathname}?${params.toString()}`);
   };
 
@@ -83,6 +96,7 @@ export function PaginationControls({
     const params = new URLSearchParams(searchParams.toString());
     params.set("limit", limit);
     params.set("page", "1"); // Reset to first page
+    params.delete('lastVisibleId');
     router.replace(`${pathname}?${params.toString()}`);
   }
 
@@ -106,7 +120,7 @@ export function PaginationControls({
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                if (currentPage > 1) handlePageChange(currentPage - 1);
+                if (currentPage > 1) handlePageChange(currentPage - 1, 'prev');
               }}
               className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
             />
@@ -138,7 +152,7 @@ export function PaginationControls({
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                if (currentPage < totalPages) handlePageChange(currentPage + 1, 'next');
               }}
               className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
             />
