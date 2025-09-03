@@ -38,7 +38,6 @@ export function ProductCard({ product }: ProductCardProps) {
     addToCart(product);
     toast({
       title: "Đã thêm vào giỏ",
-      description: `${product.name} đã được thêm vào giỏ hàng của bạn.`,
     });
   };
 
