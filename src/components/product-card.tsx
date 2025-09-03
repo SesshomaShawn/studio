@@ -44,18 +44,21 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <>
-      <Card className="w-full overflow-hidden transition-all hover:shadow-lg flex flex-col">
-        <div className="relative w-full aspect-[4/3]">
+      <Card className="w-full overflow-hidden transition-all hover:shadow-lg flex flex-col md:flex-row">
+        {/* Image Section */}
+        <div className="relative w-full md:w-1/3 aspect-[4/3] flex-shrink-0">
             <Image
                 src={product.imageUrl}
                 alt={product.name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                sizes="(max-width: 768px) 100vw, 33vw"
                 data-ai-hint={`${product.category} product`}
             />
         </div>
-        <div className="p-4 flex flex-col flex-grow">
+
+        {/* Details Section */}
+        <div className="p-4 flex flex-col flex-grow w-full md:w-2/3">
             <CardHeader className="p-0">
                 <Badge variant="outline" className="mb-2 w-fit">{product.category}</Badge>
                 <CardTitle className="text-lg font-semibold leading-tight">{product.name}</CardTitle>
@@ -64,46 +67,47 @@ export function ProductCard({ product }: ProductCardProps) {
             
             <CardContent className="p-0 pt-4 flex-grow">
                 <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-foreground">
-                    {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
-                    </span>
-                    <span>/ {product.unit}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-primary" />
-                    <span>Còn {product.stock}</span>
-                    {product.stock === 0 ? (
-                    <Badge variant="destructive" className="ml-auto">Hết</Badge>
-                    ) : isLowStock ? (
-                    <Badge variant="destructive" className="ml-auto">Sắp hết</Badge>
-                    ) : null}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span>HSD: {format(new Date(product.expiryDate), "dd/MM/yyyy", { locale: vi })}</span>
-                    {isExpired && <Badge variant="destructive" className="ml-auto">Hết hạn</Badge>}
-                </div>
+                    <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-foreground">
+                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
+                        </span>
+                        <span>/ {product.unit}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        <span>Còn {product.stock}</span>
+                        {product.stock === 0 ? (
+                        <Badge variant="destructive" className="ml-auto">Hết</Badge>
+                        ) : isLowStock ? (
+                        <Badge variant="destructive" className="ml-auto">Sắp hết</Badge>
+                        ) : null}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span>HSD: {format(new Date(product.expiryDate), "dd/MM/yyyy", { locale: vi })}</span>
+                        {isExpired && <Badge variant="destructive" className="ml-auto">Hết hạn</Badge>}
+                    </div>
                 </div>
             </CardContent>
+            
+            <CardFooter className="p-0 pt-4 mt-auto flex flex-col sm:flex-row items-center gap-2">
+                <Button className="w-full sm:w-auto sm:flex-grow" size="sm" onClick={handleAddToCart} disabled={product.stock === 0}>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Thêm vào giỏ
+                </Button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button variant="outline" size="icon" className="w-full sm:w-9" onClick={() => setEditFormOpen(true)}>
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Sửa</span>
+                  </Button>
+                  <Button variant="destructive" size="icon" className="w-full sm:w-9" onClick={() => setDeleteDialogOpen(true)}>
+                    <Trash2 className="h-4 w-4" />
+                     <span className="sr-only">Xóa</span>
+                  </Button>
+                </div>
+            </CardFooter>
         </div>
-        <CardFooter className="p-4 pt-4 mt-auto flex flex-col sm:flex-row items-center gap-2">
-            <Button className="w-full sm:w-auto sm:flex-grow" size="sm" onClick={handleAddToCart} disabled={product.stock === 0}>
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Thêm vào giỏ
-            </Button>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button variant="outline" size="icon" className="w-full sm:w-9" onClick={() => setEditFormOpen(true)}>
-                <Pencil className="h-4 w-4" />
-                <span className="sr-only">Sửa</span>
-              </Button>
-              <Button variant="destructive" size="icon" className="w-full sm:w-9" onClick={() => setDeleteDialogOpen(true)}>
-                <Trash2 className="h-4 w-4" />
-                 <span className="sr-only">Xóa</span>
-              </Button>
-            </div>
-        </CardFooter>
       </Card>
 
       <ProductForm
