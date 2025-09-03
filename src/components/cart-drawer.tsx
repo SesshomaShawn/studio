@@ -107,19 +107,18 @@ export function CartDrawer() {
                 ))}
               </div>
             </ScrollArea>
-            <SheetFooter className="mt-auto flex-col space-y-4 pt-4">
-                <Separator />
+            <div className="mt-auto flex-col space-y-4 border-t pt-4">
                 <div className="flex justify-between items-center font-semibold text-lg">
                     <span>Tổng cộng</span>
                     <span>{formatPrice(getCartTotal())}</span>
                 </div>
-                 <div className="grid grid-cols-2 gap-2">
+                 <SheetFooter className="grid grid-cols-2 gap-2 w-full">
                     <Button variant="outline" onClick={clearCart}>Dọn giỏ hàng</Button>
                     <SheetClose asChild>
                         <Button onClick={handleCheckout}>Thanh toán</Button>
                     </SheetClose>
-                </div>
-            </SheetFooter>
+                </SheetFooter>
+            </div>
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
