@@ -2,24 +2,43 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Product, ProductFormValues } from './types';
-import { initialProducts } from './data';
 import { productSchema } from './types';
-
-// NOTE: Since we are not using a database, these actions will not persist.
-// The data will reset on every server restart or page reload.
-
-let products: Product[] = initialProducts.map((p, i) => ({
-    ...p,
-    id: (i + 1).toString(),
-    name_lowercase: p.name.toLowerCase()
-}));
+import { createServerClient } from './supabase/server';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function saveImage(dataUri: string): Promise<string> {
-    // In a local-only setup, we can't "save" the image anywhere permanently.
-    // If it's a new base64 image, we just return it. The browser will display it,
-    // but it will be gone on the next reload.
-    return dataUri;
+    const supabase = createServerClient();
+    const matches = dataUri.match(/^data:(image\/(?:png|jpeg|gif));base64,(.*)$/);
+    if (!matches || matches.length !== 3) {
+        throw new Error('Invalid image data URI');
+    }
+
+    const contentType = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    const fileName = `public/${uuidv4()}.png`;
+
+    const { data, error } = await supabase.storage
+        .from('products')
+        .upload(fileName, buffer, {
+            contentType: contentType,
+            upsert: true,
+        });
+
+    if (error) {
+        console.error('Lỗi tải ảnh lên Supabase:', error);
+        throw new Error('Không thể tải ảnh lên.');
+    }
+    
+    const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+
+    return publicUrl;
 }
+
+// Prisma Client
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
 
 export async function getProducts(filters: {
@@ -27,50 +46,75 @@ export async function getProducts(filters: {
   category?: string;
   page?: number;
   limit?: number;
-}): Promise<{ products: Product[]; totalCount: number, lastVisibleId?: string }> {
+}): Promise<{ products: Product[]; totalCount: number }> {
+    const page = filters.page || 1;
+    const limit = filters.limit || 8;
+    const skip = (page - 1) * limit;
 
-  let filteredProducts = products;
+    const where: any = {};
+    if (filters.category && filters.category !== 'all') {
+        where.category = filters.category;
+    }
+    if (filters.query) {
+        where.name = {
+            contains: filters.query,
+            mode: 'insensitive',
+        };
+    }
 
-  if (filters.category && filters.category !== 'all') {
-    filteredProducts = filteredProducts.filter(p => p.category === filters.category);
-  }
-    
-  if (filters.query) {
-    const searchTerm = filters.query.toLowerCase();
-    filteredProducts = filteredProducts.filter(p => p.name_lowercase.includes(searchTerm));
-  } 
-  
-  const totalCount = filteredProducts.length;
-  const pageLimit = filters.limit || 8;
-  const page = filters.page || 1;
-  const startIndex = (page - 1) * pageLimit;
-  const endIndex = startIndex + pageLimit;
+    try {
+        const products = await prisma.product.findMany({
+            where,
+            orderBy: {
+                createdAt: 'desc',
+            },
+            take: limit,
+            skip,
+        });
+        const totalCount = await prisma.product.count({ where });
 
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-  return { products: paginatedProducts, totalCount };
+        return { products: products.map(p => ({...p, price: p.price.toNumber()})), totalCount };
+    } catch (error) {
+        console.error('Database Error:', error);
+        return { products: [], totalCount: 0 };
+    }
 }
 
-
 export async function getAllCategories(): Promise<string[]> {
-  const categories = new Set(products.map(p => p.category));
-  return Array.from(categories).sort();
+    try {
+        const categories = await prisma.product.findMany({
+            select: {
+                category: true,
+            },
+            distinct: ['category'],
+        });
+        return categories.map(c => c.category).sort();
+    } catch (error) {
+        console.error('Database Error:', error);
+        return [];
+    }
 }
 
 export async function createProduct(values: ProductFormValues) {
   const validatedFields = productSchema.safeParse(values);
 
   if (!validatedFields.success) {
+    console.error('Validation errors:', validatedFields.error.flatten().fieldErrors);
     return {
       error: 'Dữ liệu không hợp lệ!',
     };
   }
-  
-  // This will not persist.
-  console.log("Creating product (local only):", validatedFields.data);
 
-  revalidatePath('/');
-  return { success: 'Đã tạo mặt hàng (chỉ cục bộ)!' };
+  try {
+    await prisma.product.create({
+      data: validatedFields.data,
+    });
+    revalidatePath('/');
+    return { success: 'Đã tạo mặt hàng thành công!' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { error: 'Không thể tạo mặt hàng.' };
+  }
 }
 
 export async function updateProduct(id: string, values: ProductFormValues) {
@@ -81,18 +125,29 @@ export async function updateProduct(id: string, values: ProductFormValues) {
       error: 'Dữ liệu không hợp lệ!',
     };
   }
-  
-  // This will not persist.
-  console.log(`Updating product ${id} (local only):`, validatedFields.data);
-  
-  revalidatePath('/');
-  return { success: 'Đã cập nhật mặt hàng (chỉ cục bộ)!' };
+
+  try {
+    await prisma.product.update({
+      where: { id },
+      data: validatedFields.data,
+    });
+    revalidatePath('/');
+    return { success: 'Đã cập nhật mặt hàng thành công!' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { error: 'Không thể cập nhật mặt hàng.' };
+  }
 }
 
 export async function deleteProduct(id: string) {
-   // This will not persist.
-  console.log(`Deleting product ${id} (local only)`);
-  
-  revalidatePath('/');
-  return { success: 'Đã xóa mặt hàng (chỉ cục bộ)!' };
+  try {
+    await prisma.product.delete({
+      where: { id },
+    });
+    revalidatePath('/');
+    return { success: 'Đã xóa mặt hàng thành công!' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { error: 'Không thể xóa mặt hàng.' };
+  }
 }

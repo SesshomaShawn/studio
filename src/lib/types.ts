@@ -10,7 +10,8 @@ export type Product = {
   expiryDate: Date;
   imageUrl: string;
   category: string;
-  name_lowercase: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export const productSchema = z.object({
