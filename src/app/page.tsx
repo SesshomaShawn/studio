@@ -20,7 +20,7 @@ type HomeProps = {
 
 function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex flex-col gap-4">
           <Skeleton className="h-48 w-full rounded-lg" />
@@ -50,7 +50,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product: Product) => (
           <ProductCard key={product.id} product={product} />
         ))}
