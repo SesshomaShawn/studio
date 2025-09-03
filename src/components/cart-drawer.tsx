@@ -11,13 +11,15 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCart } from "@/context/cart-context";
 import { ShoppingCart, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Label } from "./ui/label";
+import { cn } from "@/lib/utils";
 
 function formatPrice(price: number) {
     return new Intl.NumberFormat("vi-VN", {
@@ -29,22 +31,31 @@ function formatPrice(price: number) {
 export function CartDrawer() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
   const { toast } = useToast();
+  const [cashGiven, setCashGiven] = useState(0);
+
+  const cartTotal = getCartTotal();
+  const change = cashGiven > 0 ? cashGiven - cartTotal : 0;
+
+  const handleClearCart = () => {
+    clearCart();
+    setCashGiven(0);
+  }
 
   const handleCheckout = () => {
     toast({
         title: "Thanh toán thành công!",
-        description: `Đơn hàng của bạn gồm ${cartItems.length} mặt hàng với tổng giá trị ${formatPrice(getCartTotal())} đã được đặt.`,
+        description: `Đơn hàng của bạn gồm ${cartItems.length} mặt hàng với tổng giá trị ${formatPrice(cartTotal)} đã được đặt.`,
     })
     clearCart();
+    setCashGiven(0);
   }
   
   const handleQuantityChange = (itemId: string, value: string) => {
-    // If the input is cleared, don't do anything immediately.
-    // This allows the user to clear the input to type a new number.
-    if (value === "") {
+    const newQuantity = parseFloat(value);
+     if (value === "") {
+        // Allow user to clear input without removing item
         return;
     }
-    const newQuantity = parseFloat(value);
     if (!isNaN(newQuantity)) {
         updateQuantity(itemId, newQuantity);
     }
@@ -94,10 +105,16 @@ export function CartDrawer() {
                             step="0.1"
                             min="0"
                             max={item.stock}
-                            // Use `defaultValue` so the user can clear the input without the old value reappearing.
-                            // The actual state is managed by the `useCart` hook.
                             defaultValue={item.quantity}
-                            onBlur={(e) => handleQuantityChange(item.id, e.target.value)}
+                            onBlur={(e) => {
+                                const val = e.target.value;
+                                if(val === "") {
+                                    // If user clears the input and blurs, remove the item
+                                    updateQuantity(item.id, 0);
+                                } else {
+                                    handleQuantityChange(item.id, val)
+                                }
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     handleQuantityChange(item.id, e.currentTarget.value)
@@ -119,12 +136,35 @@ export function CartDrawer() {
              <div className="mt-auto flex-col space-y-4 border-t pt-4">
                 <div className="flex justify-between items-center font-semibold text-lg">
                     <span>Tổng cộng</span>
-                    <span>{formatPrice(getCartTotal())}</span>
+                    <span>{formatPrice(cartTotal)}</span>
                 </div>
-                 <SheetFooter className="grid grid-cols-2 gap-2 w-full">
-                    <Button variant="outline" onClick={clearCart}>Dọn giỏ hàng</Button>
+
+                <div className="space-y-2">
+                    <Label htmlFor="cash-given">Tiền khách đưa (VND)</Label>
+                    <Input 
+                        id="cash-given"
+                        type="number"
+                        placeholder="Nhập số tiền khách đưa..."
+                        value={cashGiven || ""}
+                        onChange={(e) => setCashGiven(Number(e.target.value))}
+                    />
+                </div>
+                
+                {cashGiven > 0 && (
+                    <div className={cn(
+                        "flex justify-between items-center font-semibold text-lg",
+                        change < 0 ? "text-destructive" : "text-primary"
+                    )}>
+                        <span>{change < 0 ? "Còn thiếu" : "Tiền thừa"}</span>
+                        <span>{formatPrice(Math.abs(change))}</span>
+                    </div>
+                )}
+
+
+                 <SheetFooter className="grid grid-cols-2 gap-2 w-full pt-4">
+                    <Button variant="outline" onClick={handleClearCart}>Dọn giỏ hàng</Button>
                     <SheetClose asChild>
-                        <Button onClick={handleCheckout}>Thanh toán</Button>
+                        <Button onClick={handleCheckout} disabled={change < 0}>Thanh toán</Button>
                     </SheetClose>
                 </SheetFooter>
             </div>
