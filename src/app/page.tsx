@@ -22,7 +22,7 @@ function ProductGridSkeleton() {
     <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex flex-col md:flex-row gap-4">
-          <Skeleton className="h-48 w-full md:w-48 rounded-lg" />
+          <Skeleton className="h-36 w-full md:w-48 rounded-lg" />
           <div className="space-y-4 flex-grow">
             <Skeleton className="h-5 w-1/4" />
             <Skeleton className="h-6 w-1/2" />
@@ -53,8 +53,8 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
   }
 
   return (
-    <>
-      <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto w-full">
+      <div className="grid grid-cols-1 gap-6">
         {products.map((product: Product) => (
           <ProductCard key={product.id} product={product} />
         ))}
@@ -64,7 +64,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
           currentPage={page || 1}
           itemsPerPage={limit || 8}
         />
-    </>
+    </div>
   );
 }
 
