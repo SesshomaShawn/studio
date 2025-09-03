@@ -5,6 +5,9 @@ import type { Product, ProductFormValues } from './types';
 import { productSchema } from './types';
 import { createServerClient } from './supabase/server';
 import { v4 as uuidv4 } from 'uuid';
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export async function saveImage(dataUri: string): Promise<string> {
     const supabase = createServerClient();
@@ -35,11 +38,6 @@ export async function saveImage(dataUri: string): Promise<string> {
 
     return publicUrl;
 }
-
-// Prisma Client
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
-
 
 export async function getProducts(filters: {
   query?: string;
