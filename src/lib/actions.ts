@@ -30,7 +30,7 @@ export async function saveImage(dataUri: string): Promise<string> {
         });
 
     if (error) {
-        console.error('Lỗi tải ảnh lên Supabase:', String(error));
+        console.error('Lỗi tải ảnh lên Supabase:', error);
         throw new Error('Không thể tải ảnh lên.');
     }
     
@@ -73,7 +73,7 @@ export async function getProducts(filters: {
 
         return { products: products.map(p => ({...p, price: p.price.toNumber()})), totalCount };
     } catch (error) {
-        console.error('Database Error:', String(error));
+        console.error('Database Error:', error);
         return { products: [], totalCount: 0 };
     }
 }
@@ -88,7 +88,7 @@ export async function getAllCategories(): Promise<string[]> {
         });
         return categories.map(c => c.category).sort();
     } catch (error) {
-        console.error('Database Error:', String(error));
+        console.error('Database Error:', error);
         return [];
     }
 }
@@ -110,7 +110,7 @@ export async function createProduct(values: ProductFormValues) {
     revalidatePath('/');
     return { success: 'Đã tạo mặt hàng thành công!' };
   } catch (error) {
-    console.error('Database Error:', String(error));
+    console.error('Database Error:', error);
     return { error: 'Không thể tạo mặt hàng.' };
   }
 }
@@ -132,7 +132,7 @@ export async function updateProduct(id: string, values: ProductFormValues) {
     revalidatePath('/');
     return { success: 'Đã cập nhật mặt hàng thành công!' };
   } catch (error) {
-    console.error('Database Error:', String(error));
+    console.error('Database Error:', error);
     return { error: 'Không thể cập nhật mặt hàng.' };
   }
 }
@@ -145,7 +145,7 @@ export async function deleteProduct(id: string) {
     revalidatePath('/');
     return { success: 'Đã xóa mặt hàng thành công!' };
   } catch (error) {
-    console.error('Database Error:', String(error));
+    console.error('Database Error:', error);
     return { error: 'Không thể xóa mặt hàng.' };
   }
 }
