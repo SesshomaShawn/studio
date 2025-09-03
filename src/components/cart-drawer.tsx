@@ -39,8 +39,9 @@ export function CartDrawer() {
   }
   
   const handleQuantityChange = (itemId: string, value: string) => {
+    // If the input is cleared, don't do anything immediately.
+    // This allows the user to clear the input to type a new number.
     if (value === "") {
-        updateQuantity(itemId, 0);
         return;
     }
     const newQuantity = parseFloat(value);
@@ -93,8 +94,16 @@ export function CartDrawer() {
                             step="0.1"
                             min="0"
                             max={item.stock}
-                            value={item.quantity}
-                            onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                            // Use `defaultValue` so the user can clear the input without the old value reappearing.
+                            // The actual state is managed by the `useCart` hook.
+                            defaultValue={item.quantity}
+                            onBlur={(e) => handleQuantityChange(item.id, e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleQuantityChange(item.id, e.currentTarget.value)
+                                    e.currentTarget.blur();
+                                }
+                            }}
                             className="h-8 w-20"
                          />
                          <span className="text-sm text-muted-foreground">{item.unit}</span>
@@ -107,7 +116,7 @@ export function CartDrawer() {
                 ))}
               </div>
             </ScrollArea>
-            <div className="mt-auto flex-col space-y-4 border-t pt-4">
+             <div className="mt-auto flex-col space-y-4 border-t pt-4">
                 <div className="flex justify-between items-center font-semibold text-lg">
                     <span>Tổng cộng</span>
                     <span>{formatPrice(getCartTotal())}</span>
