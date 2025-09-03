@@ -19,7 +19,7 @@ type HomeProps = {
 
 function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6">
+    <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex flex-col md:flex-row gap-4">
           <Skeleton className="h-48 w-full md:w-48 rounded-lg" />
@@ -43,7 +43,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
 
   if (products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center col-span-full">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center col-span-full max-w-4xl mx-auto">
         <h3 className="text-2xl font-bold tracking-tight">Không tìm thấy mặt hàng nào</h3>
         <p className="text-sm text-muted-foreground">
           Hãy thử điều chỉnh lại tìm kiếm hoặc bộ lọc.
@@ -54,7 +54,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto">
         {products.map((product: Product) => (
           <ProductCard key={product.id} product={product} />
         ))}
