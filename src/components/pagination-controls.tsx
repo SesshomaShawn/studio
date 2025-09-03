@@ -93,11 +93,11 @@ export function PaginationControls({
   }
   
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-2">
       <div className="text-sm text-muted-foreground">
         <strong>{(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, itemCount)}</strong>/{itemCount}
       </div>
-      <Pagination>
+      <Pagination className="mx-0 w-auto">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -110,25 +110,27 @@ export function PaginationControls({
             />
           </PaginationItem>
 
-          {paginationRange.map((pageNumber, index) => {
-             if (typeof pageNumber === 'string') {
-                return <PaginationEllipsis key={`${pageNumber}-${index}`} />;
-             }
-             return (
-                <PaginationItem key={pageNumber}>
-                    <PaginationLink
-                    href="#"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        handlePageChange(pageNumber);
-                    }}
-                    isActive={pageNumber === currentPage}
-                    >
-                    {pageNumber}
-                    </PaginationLink>
-                </PaginationItem>
-             )
-          })}
+          <div className="hidden sm:flex">
+            {paginationRange.map((pageNumber, index) => {
+              if (typeof pageNumber === 'string') {
+                  return <PaginationEllipsis key={`${pageNumber}-${index}`} />;
+              }
+              return (
+                  <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(pageNumber);
+                      }}
+                      isActive={pageNumber === currentPage}
+                      >
+                      {pageNumber}
+                      </PaginationLink>
+                  </PaginationItem>
+              )
+            })}
+          </div>
 
 
           <PaginationItem>
@@ -143,7 +145,7 @@ export function PaginationControls({
           </PaginationItem>
         </PaginationContent>
       </Pagination>
-      <div className="flex items-center gap-2">
+      <div className="hidden items-center gap-2 md:flex">
          <Select
             value={String(itemsPerPage)}
             onValueChange={handleLimitChange}
