@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -44,96 +45,62 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <>
       <Card className="w-full overflow-hidden transition-all hover:shadow-lg flex flex-col">
-        <div className="flex flex-col md:flex-row">
-            {/* Image on the left, Content on the right for Desktop */}
-            {/* On mobile, this becomes a flex-row container for image and primary details */}
-            <div className="flex flex-row p-4 md:p-0">
-                 <div className="relative w-24 h-24 md:w-48 md:h-auto md:flex-shrink-0">
-                    <Image
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-cover rounded-md"
-                        sizes="(max-width: 768px) 96px, 192px"
-                        data-ai-hint={`${product.category} product`}
-                    />
-                </div>
-                 {/* Mobile: Price, Stock, HSD. Hidden on Desktop */}
-                 <div className="md:hidden flex-grow pl-4">
-                     <div className="space-y-1.5 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-primary" />
-                            <span className="font-medium text-foreground text-base">
-                            {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
-                            </span>
-                            <span>/ {product.unit}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-primary" />
-                            <span>Còn {product.stock}</span>
-                             {product.stock === 0 ? (
-                                <Badge variant="destructive" className="ml-auto">Hết</Badge>
-                                ) : isLowStock ? (
-                                <Badge variant="destructive" className="ml-auto">Sắp hết</Badge>
-                                ) : null}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-primary" />
-                            <span>HSD: {format(new Date(product.expiryDate), "dd/MM/yy", { locale: vi })}</span>
-                            {isExpired && <Badge variant="destructive" className="ml-auto">Hết hạn</Badge>}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main content block */}
-            <div className="flex flex-col flex-grow">
-                 {/* Mobile: Name/Description below image. Desktop: All info on the right */}
-                <CardHeader className="p-4 pt-0 md:pt-4 md:pb-2">
-                    <Badge variant="outline" className="mb-2 w-fit hidden md:inline-flex">{product.category}</Badge>
-                    <CardTitle className="text-lg md:text-xl font-semibold leading-tight">{product.name}</CardTitle>
-                    <CardDescription className="mt-1 text-sm">{product.description}</CardDescription>
-                </CardHeader>
-                
-                {/* Desktop: Price, Stock, HSD. Hidden on Mobile */}
-                <CardContent className="hidden md:block flex-grow p-4 pt-2">
-                    <div className="space-y-3 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-foreground text-base">
-                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
-                        </span>
-                        <span>/ {product.unit}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-primary" />
-                        <span>Còn {product.stock} sản phẩm trong kho</span>
-                        {product.stock === 0 ? (
-                        <Badge variant="destructive">Hết hàng</Badge>
-                        ) : isLowStock ? (
-                        <Badge variant="destructive">Sắp hết</Badge>
-                        ) : null}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span>HSD: {format(new Date(product.expiryDate), "dd/MM/yyyy", { locale: vi })}</span>
-                        {isExpired && <Badge variant="destructive">Hết hạn</Badge>}
-                    </div>
-                    </div>
-                </CardContent>
-            </div>
+        <div className="relative w-full aspect-[4/3]">
+            <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                data-ai-hint={`${product.category} product`}
+            />
         </div>
-         <CardFooter className="p-4 pt-2 mt-auto flex items-center justify-between">
-             <Button className="flex-grow md:flex-grow-0" size="sm" onClick={handleAddToCart} disabled={product.stock === 0}>
+        <div className="p-4 flex flex-col flex-grow">
+            <CardHeader className="p-0">
+                <Badge variant="outline" className="mb-2 w-fit">{product.category}</Badge>
+                <CardTitle className="text-lg font-semibold leading-tight">{product.name}</CardTitle>
+                <CardDescription className="mt-1 text-sm line-clamp-2">{product.description}</CardDescription>
+            </CardHeader>
+            
+            <CardContent className="p-0 pt-4 flex-grow">
+                <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-foreground">
+                    {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)}
+                    </span>
+                    <span>/ {product.unit}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-primary" />
+                    <span>Còn {product.stock}</span>
+                    {product.stock === 0 ? (
+                    <Badge variant="destructive" className="ml-auto">Hết</Badge>
+                    ) : isLowStock ? (
+                    <Badge variant="destructive" className="ml-auto">Sắp hết</Badge>
+                    ) : null}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span>HSD: {format(new Date(product.expiryDate), "dd/MM/yyyy", { locale: vi })}</span>
+                    {isExpired && <Badge variant="destructive" className="ml-auto">Hết hạn</Badge>}
+                </div>
+                </div>
+            </CardContent>
+        </div>
+        <CardFooter className="p-4 pt-4 mt-auto flex flex-col sm:flex-row items-center gap-2">
+            <Button className="w-full sm:w-auto sm:flex-grow" size="sm" onClick={handleAddToCart} disabled={product.stock === 0}>
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 Thêm vào giỏ
             </Button>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditFormOpen(true)}>
-                <Pencil className="mr-2 h-4 w-4" /> Sửa
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" size="icon" className="w-full sm:w-9" onClick={() => setEditFormOpen(true)}>
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Sửa</span>
               </Button>
-              <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-                <Trash2 className="mr-2 h-4 w-4" /> Xóa
+              <Button variant="destructive" size="icon" className="w-full sm:w-9" onClick={() => setDeleteDialogOpen(true)}>
+                <Trash2 className="h-4 w-4" />
+                 <span className="sr-only">Xóa</span>
               </Button>
             </div>
         </CardFooter>

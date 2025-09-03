@@ -1,3 +1,4 @@
+
 import { AppHeader } from "@/components/app-header";
 import { ProductFilters } from "@/components/product-filters";
 import { ProductSearch } from "@/components/product-search";
@@ -19,18 +20,13 @@ type HomeProps = {
 
 function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col md:flex-row gap-4">
-          <Skeleton className="h-36 w-full md:w-48 rounded-lg" />
-          <div className="space-y-4 flex-grow">
-            <Skeleton className="h-5 w-1/4" />
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-4 w-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-4 w-1/3" />
-            </div>
+        <div key={i} className="flex flex-col gap-4">
+          <Skeleton className="h-48 w-full rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
           </div>
         </div>
       ))}
@@ -43,7 +39,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
 
   if (products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center col-span-full max-w-4xl mx-auto">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center col-span-full">
         <h3 className="text-2xl font-bold tracking-tight">Không tìm thấy mặt hàng nào</h3>
         <p className="text-sm text-muted-foreground">
           Hãy thử điều chỉnh lại tìm kiếm hoặc bộ lọc.
@@ -53,8 +49,8 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
   }
 
   return (
-    <div className="max-w-4xl mx-auto w-full">
-      <div className="grid grid-cols-1 gap-6">
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product: Product) => (
           <ProductCard key={product.id} product={product} />
         ))}
@@ -64,7 +60,7 @@ async function ProductGrid({ query, category, page, limit }: { query?: string; c
           currentPage={page || 1}
           itemsPerPage={limit || 8}
         />
-    </div>
+    </>
   );
 }
 
