@@ -53,7 +53,7 @@ export function ProductCard({ product }: ProductCardProps) {
                         src={product.imageUrl}
                         alt={product.name}
                         fill
-                        className="object-cover rounded-md"
+                        className="object-contain rounded-md"
                         sizes="33vw"
                         data-ai-hint={`${product.category} product`}
                     />
@@ -116,7 +116,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                 data-ai-hint={`${product.category} product`}
             />
