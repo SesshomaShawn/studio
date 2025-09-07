@@ -11,6 +11,15 @@ let products: Product[] = [...mockProducts];
 // Simulate network delay
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+function normalizeString(str: string): string {
+    return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d");
+}
+
+
 export async function saveImage(dataUri: string): Promise<string> {
     // In a real app, this would upload to a cloud storage and return the URL.
     // For this mock version, we'll just return the data URI as if it were a public URL.
@@ -39,7 +48,10 @@ export async function getProducts(filters: {
     }
 
     if (filters.query) {
-        filteredProducts = filteredProducts.filter(p => p.name.toLowerCase().includes(filters.query.toLowerCase()));
+        const normalizedQuery = normalizeString(filters.query);
+        filteredProducts = filteredProducts.filter(p => 
+            normalizeString(p.name).includes(normalizedQuery)
+        );
     }
     
     const totalCount = filteredProducts.length;
