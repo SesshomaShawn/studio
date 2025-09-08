@@ -6,6 +6,7 @@ import { getAllCategories } from "@/lib/actions";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductList } from "@/components/product-list";
+import { ProductTotalCount } from "@/components/product-total-count";
 
 type HomeProps = {
   searchParams?: {
@@ -56,6 +57,10 @@ export default async function Home({ searchParams }: HomeProps) {
              <ProductFilters categories={categories} />
           </div>
         </div>
+
+        <Suspense key={`${suspenseKey}-count`} fallback={<Skeleton className="h-5 w-48" />}>
+           <ProductTotalCount query={query} category={category} />
+        </Suspense>
         
         <div className="flex flex-col gap-6">
           <Suspense key={suspenseKey} fallback={<ProductGridSkeleton />}>
