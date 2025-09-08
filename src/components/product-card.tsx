@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -88,7 +87,6 @@ export function ProductCard({ product }: ProductCardProps) {
                  <CardHeader className="p-0">
                     <Badge variant="outline" className="mb-2 w-fit">{product.category}</Badge>
                     <CardTitle className="text-base font-semibold leading-tight line-clamp-2">{product.name}</CardTitle>
-                    <CardDescription className="mt-1 text-xs line-clamp-2">{product.description}</CardDescription>
                 </CardHeader>
                 <CardFooter className="p-0 pt-4 flex flex-col sm:flex-row items-center gap-2">
                     <Button className="w-full sm:w-auto sm:flex-grow" size="sm" onClick={handleAddToCart} disabled={product.stock === 0}>
@@ -126,7 +124,6 @@ export function ProductCard({ product }: ProductCardProps) {
             <CardHeader className="p-0">
                 <Badge variant="outline" className="mb-2 w-fit">{product.category}</Badge>
                 <CardTitle className="text-base font-semibold leading-tight line-clamp-2">{product.name}</CardTitle>
-                <CardDescription className="mt-1 text-xs line-clamp-2">{product.description}</CardDescription>
             </CardHeader>
             
             <CardContent className="p-0 pt-3 flex-grow">

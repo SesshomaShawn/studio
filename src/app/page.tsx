@@ -2,19 +2,15 @@
 import { AppHeader } from "@/components/app-header";
 import { ProductFilters } from "@/components/product-filters";
 import { ProductSearch } from "@/components/product-search";
-import { ProductCard } from "@/components/product-card";
-import { getAllCategories, getProducts } from "@/lib/actions";
+import { getAllCategories } from "@/lib/actions";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PaginationControls } from "@/components/pagination-controls";
-import { Product } from "@/lib/types";
+import { ProductList } from "@/components/product-list";
 
 type HomeProps = {
   searchParams?: {
     query?: string;
     category?: string;
-    page?: string;
-    limit?: string;
   };
 };
 
@@ -26,7 +22,6 @@ function ProductGridSkeleton() {
           <Skeleton className="aspect-[4/3] w-full rounded-lg" />
           <div className="space-y-2">
             <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-1/2" />
           </div>
         </div>
@@ -35,44 +30,12 @@ function ProductGridSkeleton() {
   );
 }
 
-async function ProductGrid({ query, category, page, limit }: { query?: string; category?: string; page?: number, limit?: number }) {
-  const { products, totalCount } = await getProducts({ query, category, page, limit });
-
-  if (products.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center col-span-full">
-        <h3 className="text-2xl font-bold tracking-tight">Không tìm thấy mặt hàng nào</h3>
-        <p className="text-sm text-muted-foreground">
-          Hãy thử điều chỉnh lại tìm kiếm hoặc bộ lọc.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product: Product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-       <PaginationControls
-          itemCount={totalCount}
-          currentPage={page || 1}
-          itemsPerPage={limit || 8}
-        />
-    </>
-  );
-}
-
 export default async function Home({ searchParams }: HomeProps) {
   const query = searchParams?.query;
   const category = searchParams?.category;
-  const page = Number(searchParams?.page) || 1;
-  const limit = Number(searchParams?.limit) || 8;
   const categories = await getAllCategories();
 
-  const suspenseKey = `${query}-${category}-${page}-${limit}`;
+  const suspenseKey = `${query}-${category}`;
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
@@ -96,7 +59,7 @@ export default async function Home({ searchParams }: HomeProps) {
         
         <div className="flex flex-col gap-6">
           <Suspense key={suspenseKey} fallback={<ProductGridSkeleton />}>
-            <ProductGrid query={query} category={category} page={page} limit={limit} />
+            <ProductList query={query} category={category} />
           </Suspense>
         </div>
       </main>
